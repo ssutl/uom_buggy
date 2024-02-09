@@ -1,37 +1,32 @@
 #include "mbed.h"
 
-// Initialize serial communication for debugging
+// Pin configuration on the Nucleo-64 board
 // Bipolar 1 PA_3
 // Bipolar 2 PA_2
 // PWM1 PA_10
 // PWM2 PB_3
 // Enable PB_5
 
-DigitalOut bipolar1(D7);
-DigitalOut bipolar2(D6);
+DigitalOut bipolarLeft(D7);
+DigitalOut bipolarRight(D6);
 DigitalOut enablePin(PB_5);
-DigitalOut direction(PA_8);
-PwmOut pwm1(PA_10);
-PwmOut pwm2(PB_3);
+PwmOut pwmLeft(PA_10);
+PwmOut pwmRight(PB_3);
 
 
 
 int main() {
-
-    // Enable the motor driver
+    //Pin configuration for bipolar mode
     enablePin.write(1);
-
-    // // Set bipolar outputs to high
-    bipolar1.write(1);
-    bipolar2.write(1);
+    bipolarLeft.write(1);
+    bipolarRight.write(1);
 
 
-    pwm1.period(0.001f); // 1kHz frequency
-    pwm1.write(1.0f);    // 60% duty cycle 
-
-
-    pwm2.period(0.001f); // 1kHz frequency
-    pwm2.write(1.0f);    // 60% duty cycle
+    //Pwm configuration
+    pwmLeft.period(0.001f); 
+    pwmLeft.write(1.0f);
+    pwmRight.period(0.001f); 
+    pwmRight.write(1.0f); 
        
 
     while(1) {
