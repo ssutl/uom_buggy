@@ -10,11 +10,20 @@
 // opposite direction. 
 
 // Pin configuration on the Nucleo-64 board
+// Bipolar1 plugged into D7
 DigitalOut bipolarLeft(D7); 
+//Bipolar2 plugged into D6
 DigitalOut bipolarRight(D6); 
+// Enable pin plugged into PB_5
 DigitalOut enablePin(PB_5);
+// PWM 1 plugged into PA_10
 PwmOut motorLeft(PA_10);
+// PWM 2 plugged into PB_3
 PwmOut motorRight(PB_3);
+// Plug BLE RX into PA_11 and TX into PA_12
+BufferedSerial hm10(PA_11,PA_12); // TX, RX
+
+char command;
 
 class Motor {
 private:
@@ -24,9 +33,11 @@ private:
 
 public:
     // Constructor for the Motor class, specifying motor side and optional PWM value
-    Motor(char motorSide) : motor(motorSide == 'L' ? motorLeft : motorRight) {
-        motor.period(period); // Set inital PWM period
-        motor.write(dutyCycle); // Set initial PWM value
+    //The part after the colon is called an initializer list. It is used to initialize the member variables of the class prior to the constructor being run.
+    //The part before is basically doing type safety for the inputted motor pin, ensuring that it is a PwmOut type and also a refrence.
+    Motor(PwmOut &randomInputtedMotorPin) : motor(randomInputtedMotorPin) {
+        motor.period(period);
+        motor.write(dutyCycle);
     }
 
     // Member function to set the PWM value
@@ -44,7 +55,7 @@ public:
     }
 
     void setPeriod(float newPeriod) {
-        motor.period(period); // Set the PWM period
+        motor.period(newPeriod); // Set the PWM period
     }
 
     void stop() {
@@ -63,15 +74,36 @@ int main() {
     bipolarLeft = 1;
     bipolarRight = 1;
 
+    //BLE configuration
+    //Since asynchronous communication doesn’t use a clock, the two devices communicating  agree a common clock speed to determine the bit period. This is called the baud rate.
+    //A baud rate is essential in serial communication because it specifies the speed at which data is transmitted and received over a communication channel. 
+    hm10.set_baud(9600); // Set the baud rate to 9600
+
+
+
 
     // Create Motor instances for left and right motors
-    Motor leftMotor('L'); 
-    Motor rightMotor('R');
-
-    
+    Motor leftMotor(motorLeft);
+    Motor rightMotor(motorRight);
 
 
-    while(true) {
-        // Main loop
+    char command;
+    while (true) {
+        if (hm10.readable()) {
+            if (hm10.read(&command, 1)) {
+                // Implement movement logic based on command
+                // For example, if command is 'A', move forward; if 'B', move backward;
+                // This is a placeholder. You need to define the actual commands and implement the logic.
+                switch (command) {
+                    case 'A':
+                        // Move forward
+                        break;
+                    case 'B':
+                        // Move backward
+                        break;
+                    // Add cases for turning and stopping
+                }
+            }
+        }
     }
 }
