@@ -11,25 +11,25 @@
 // opposite direction. 
 
 // Pin configuration on the Nucleo-64 board
-//Bipolar1 goes to D10
-DigitalOut bipolarLeft(D10); 
-//Bipolar2 goes to D8
-DigitalOut bipolarRight(D8); 
-//Enable goes to D7
-DigitalOut enablePin(D7);
-//PWM1 goes to D6
-PwmOut motorLeft(D6);
-//PWM2 goes to D9
-PwmOut motorRight(D9);
+//Bipolar1 goes to PB_3
+DigitalOut bipolarLeft(PB_3); 
+//Bipolar2 goes to PA_2
+DigitalOut bipolarRight(PA_2); 
+//Enable goes to PC_4
+DigitalOut enablePin(PC_4);
+//PWM1 goes to PB_13
+PwmOut motorLeft(PB_13);
+//PWM2 goes to PB_14
+PwmOut motorRight(PB_14);
 
 // Plug BLE RX into PA_11 and TX into PA_12
 Serial hm10(PA_11,PA_12); // TX, RX
 
 // Configure your pins and pulses per revolution
-//Channel A goes to D15 and Channel B goes to D14
-QEI leftEncoder(D15, D14, NC, 512, QEI::X2_ENCODING);
-// QEI rightEncoder(D13, D12, NC, 512, QEI::X2_ENCODING);
-QEI rightEncoder(D12, D13, NC, 512, QEI::X2_ENCODING);
+//Channel A goes to PC_8 and Channel B goes to PC_6
+QEI leftEncoder(PC_8, PC_6, NC, 512, QEI::X2_ENCODING);
+//Channel A goes to PB_15 and Channel B goes to PB_1
+QEI rightEncoder(PB_15, PB_1, NC, 512, QEI::X2_ENCODING);
 
 Timer t;
 
