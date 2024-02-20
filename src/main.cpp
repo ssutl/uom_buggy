@@ -104,7 +104,7 @@ public:
         int pulseDiff = currentPulseCount - previousPulseCount;
 
         float encoderTickRate = static_cast<float>(pulseDiff) / elapsed_time; // Convert to seconds
-        wheelVelocity = (encoderTickRate * 3.14 * wheelDiameter) / (gearRatio * cpr);
+        wheelVelocity = (encoderTickRate * 3.14f * wheelDiameter) / (gearRatio * cpr);
 
         printf("%c Motor Speed: %.2f m/s\n", motorIdentifier, wheelVelocity);
 
@@ -119,9 +119,9 @@ private:                                             // Private data member decl
 public:                                              // Public declarations
     Potentiometer(PinName pin) : inputSignal(pin) {} // Constructor - user provided pin name assigned to AnalogIn
 
-    float read(void) const
-    {                              // Public member function to measure the normalised amplitude
-        return inputSignal.read(); // Returns the ADC value normalised to range 0.0 - 1.0
+    float read(void)
+    {
+        return inputSignal.read();
     }
 };
 
