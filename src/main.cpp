@@ -2,29 +2,16 @@
 #include "QEI.h"
 #include "C12832.h"
 
-// LCD library
-// http://os.mbed.com/users/askksa12543/code/C12832/
+PwmOut pwm1(PB_14);
+PwmOut pwm2(PB_13);
+DigitalOut bipolar1(PA_11);
+DigitalOut bipolar2(PA_12);
+DigitalOut enablePin(PC_8);
 
-// Bipolar1 goes to PB_3
-DigitalOut bipolarLeft(PB_3);
-// Bipolar2 goes to PA_2
-DigitalOut bipolarRight(PA_2);
-// Enable goes to PC_4
-DigitalOut enablePin(PC_4);
-// PWM1 goes to PB_13
-PwmOut motorLeft(PB_13);
-// PWM2 goes to PB_14
-PwmOut motorRight(PB_14);
-
-// Plug BLE RX into PA_11 and TX into PA_12
 Serial hm10(PA_11, PA_12); // TX, RX
-
 C12832 lcd(D11, D13, D12, D7, D10);
 
-// Configure your pins and pulses per revolution
-// Channel A goes to PC_8 and Channel B goes to PC_6
 QEI leftEncoder(PC_8, PC_6, NC, 512, QEI::X2_ENCODING);
-// Channel A goes to PB_15 and Channel B goes to PB_1
 QEI rightEncoder(PB_15, PB_1, NC, 512, QEI::X2_ENCODING);
 
 Timer t;
@@ -135,8 +122,8 @@ int main()
     hm10.baud(9600); // Set the baud rate to 9600
 
     // Create Motor instances for left and right motors
-    Motor leftMotor(motorLeft, leftEncoder, 'L');
-    Motor rightMotor(motorRight, rightEncoder, 'R');
+    Motor leftMotor(pwm1, leftEncoder, 'L');
+    Motor rightMotor(pwm2, rightEncoder, 'R');
 
     // Create Potentiometer instance
     Potentiometer potentiometerLeft(A0);
