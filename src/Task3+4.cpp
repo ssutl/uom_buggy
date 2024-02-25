@@ -1,10 +1,14 @@
 #include "mbed.h"
+#include "C12832.h"
 
 PwmOut pwm1(PB_14);
 PwmOut pwm2(PB_13);
 DigitalOut bipolar1(PA_11);
 DigitalOut bipolar2(PA_12);
 DigitalOut enablePin(PC_8);
+DigitalOut direction1(PC_5);
+DigitalOut direction2(PC_6);
+C12832 lcd(D11, D13, D12, D7, D10);
 
 class Motor
 {
@@ -33,17 +37,36 @@ public:
     }
 };
 
-class Potentiometer
+class Potentiometer // Begin Potentiometer class definition
 {
+private:                                              // Private data member declaration
+    AnalogIn inputSignal;                             // Declaration of AnalogIn object
+    float VDD, currentSampleNorm, currentSampleVolts; // Float variables to speficy the value of VDD and most recent samples
+
+public:                                                               // Public declarations
+    Potentiometer(PinName pin, float v) : inputSignal(pin), VDD(v) {} // Constructor - user provided pin name assigned to AnalogIn...
+    float amplitudeNorm(void)
+    {
+        return inputSignal.read(); // Returns the ADC value normalised to range 0.0 - 1.0
+    }
+
+    void sample(void) // Public member function to sample an analogue voltage
+    {
+        currentSampleNorm = inputSignal.read(); // Stores the current ADC value to the class's data member for normalised values (0.0 - 1.0)
+    }
+};
+
+class SamplingPotentiometer : public Potentiometer
+{
+
 private:
-    AnalogIn inputSignal;
+    float samplingFrequency;
+    Ticker sampler;
 
 public:
-    Potentiometer(PinName pin) : inputSignal(pin) {}
-
-    float read(void)
+    SamplingPotentiometer(PinName p, float v, float fs) : Potentiometer(p, v), samplingFrequency(fs)
     {
-        return inputSignal.read();
+        sampler.attach(callback(this, &SamplingPotentiometer::sample), 1.0 / samplingFrequency);
     }
 };
 
@@ -53,29 +76,35 @@ int main()
     enablePin.write(1);
     bipolar1.write(1);
     bipolar2.write(1);
+    direction1.write(1);
+    direction2.write(1);
 
-    // Create Potentiometer instance
-    Potentiometer potentiometerLeft(A0);
-    Potentiometer potentiometerRight(A1);
-
-    // Potentiometer values
-    float initialLeftPotValue = potentiometerLeft.read();
-    float initialRightPotValue = potentiometerRight.read();
+    // Potentiometer instances
+    SamplingPotentiometer left_p(A0, 3.3, 400), right_p(A1, 3.3, 400); // choose appropriately fast sampling frequency
 
     // Create Motor instances for left and right motors
-    Motor leftMotor(pwm1, 'L');
-    Motor rightMotor(pwm2, 'R');
-
-    // Immediately set the initial duty cycle based on the potentiometer readings
-    leftMotor.setDutyCycle(initialLeftPotValue);
-    rightMotor.setDutyCycle(initialRightPotValue);
+    Motor leftMotor(pwm1, 'L'), rightMotor(pwm2, 'R');
 
     while (true)
     {
-        // Continuously read potentiometer values and update the duty cycles
-        float leftPotValue = potentiometerLeft.read();
-        float rightPotValue = potentiometerRight.read();
+        // Read normalized potentiometer values
+        float leftPotValue = left_p.amplitudeNorm();
+        float rightPotValue = right_p.amplitudeNorm();
+
+        // Map potentiometer values to PWM duty cycles
         leftMotor.setDutyCycle(leftPotValue);
         rightMotor.setDutyCycle(rightPotValue);
+
+        // Clear the screen before updating
+        lcd.cls();
+
+        // Display the duty cycles on the LCD
+        lcd.locate(0, 0);
+        lcd.printf("Left Motor: %.2f%%", leftPotValue * 100);
+
+        lcd.locate(0, 15);
+        lcd.printf("Right Motor: %.2f%%", rightPotValue * 100);
+
+        wait(0.1);
     }
 }
