@@ -19,6 +19,14 @@ Timer t;
 
 char command;
 
+// Constants for movement
+const float FORWARD_SPEED = 0.7f;
+const float TURN_SPEED = 0.7f;
+const float STOP_SPEED = 0.5f;   // Assuming 0.5 is the neutral duty cycle for stopping
+const float FORWARD_TIME = 1.7f; // Adjust based on actual requirement
+const float TURN_TIME = 0.70f;   // Adjust based on actual requirement
+const float STOP_TIME = 0.5f;    // Time to pause after each action
+
 class Motor
 {
 private:
@@ -71,9 +79,9 @@ public:
     // New method to calculate and return the motor speed
     float getSpeed()
     {
-        float wheelDiameter = 0.15f; // in meters
-        int gearRatio = 12.75;       // 2:1 gear ratio
-        int cpr = 512;               // Encoder counts per revolution
+        float wheelDiameter = 0.0834f; // in meters
+        int gearRatio = 12.75;         // 2:1 gear ratio
+        int cpr = 512;                 // Encoder counts per revolution
 
         // Reset and start timer for sampling period
         t.reset();
@@ -113,58 +121,76 @@ public:                                              // Public declarations
     }
 };
 
+void moveForward(Motor &leftMotor, Motor &rightMotor)
+{
+    leftMotor.setDutyCycle(FORWARD_SPEED);
+    rightMotor.setDutyCycle(FORWARD_SPEED);
+    wait(FORWARD_TIME);
+    leftMotor.setDutyCycle(STOP_SPEED);
+    rightMotor.setDutyCycle(STOP_SPEED);
+    wait(STOP_TIME);
+}
+
+void turnRight(Motor &leftMotor, Motor &rightMotor)
+{
+    leftMotor.setDutyCycle(TURN_SPEED);
+    rightMotor.setDutyCycle(STOP_SPEED); // Assuming right turn means slowing down or stopping the right motor
+    wait(TURN_TIME);
+    leftMotor.setDutyCycle(STOP_SPEED);
+    rightMotor.setDutyCycle(STOP_SPEED);
+    wait(STOP_TIME);
+}
+
+void turnLeft(Motor &leftMotor, Motor &rightMotor)
+{
+    leftMotor.setDutyCycle(STOP_SPEED); // Assuming left turn means slowing down or stopping the left motor
+    rightMotor.setDutyCycle(TURN_SPEED);
+    wait(TURN_TIME);
+    leftMotor.setDutyCycle(STOP_SPEED);
+    rightMotor.setDutyCycle(STOP_SPEED);
+    wait(STOP_TIME);
+}
+
 int main()
 {
     // Pin configuration for bipolar mode
     enablePin.write(1);
-    bipolarLeft.write(1);
-    bipolarRight.write(1);
+    bipolar1.write(1);
+    bipolar2.write(1);
     direction1.write(1);
     direction2.write(1);
-
-    hm10.baud(9600); // Set the baud rate to 9600
 
     // Create Motor instances for left and right motors
     Motor leftMotor(pwm1, leftEncoder, 'L');
     Motor rightMotor(pwm2, rightEncoder, 'R');
 
-    // Create Potentiometer instance
-    Potentiometer potentiometerLeft(A0);
-    Potentiometer potentiometerRight(A1);
-
     char command;
     while (true)
     {
-        // Task 3: Change the duty cycle of the motors based on the potentiometer readings
-        // Task 4: Drive both motors independently and set their speed based on the potentiometer readings
-        float leftPotValue = potentiometerLeft.read();
-        float rightPotValue = potentiometerRight.read();
-        leftMotor.setDutyCycle(leftPotValue);
-        rightMotor.setDutyCycle(rightPotValue);
+        // Square
+        moveForward(leftMotor, rightMotor, 1.7);
+        turnRight(leftMotor, rightMotor, 0.7);
+        moveForward(leftMotor, rightMotor, 1.7);
+        turnRight(leftMotor, rightMotor, 0.7);
+        moveForward(leftMotor, rightMotor, 1.7);
+        turnRight(leftMotor, rightMotor, 0.7);
+        moveForward(leftMotor, rightMotor, 1.7);
 
-        // Task 5: Read the speed from encoder and show RPM and pulse count on the LCD
-        float leftSpeed = leftMotor.getSpeed();
-        float rightSpeed = rightMotor.getSpeed();
-        lcd.cls(); // Clear the screen
-        lcd.locate(0, 3);
-        lcd.printf("Left RPM: %.2f", leftSpeed * 60);
-        lcd.locate(0, 15);
-        lcd.printf("Right RPM: %.2f", rightSpeed * 60);
-        lcd.locate(0, 27);
-        lcd.printf("Left Pulse: %d", leftEncoder.getPulses());
-        lcd.locate(0, 39);
-        lcd.printf("Right Pulse: %d", rightEncoder.getPulses());
+        // Turn buggy around
+        turnRight(leftMotor, rightMotor, 1.2);
 
-        // Task 6: make robot drive in a 1m by 1m square, once the robot has completed the square,turn the robot around and trace the square again
+        // Make buggy trace the square
+        moveForward(leftMotor, rightMotor, 1.7);
+        turnLeft(leftMotor, rightMotor, 0.7);
+        moveForward(leftMotor, rightMotor, 1.7);
+        turnLeft(leftMotor, rightMotor, 0.7);
+        moveForward(leftMotor, rightMotor, 1.7);
+        turnLeft(leftMotor, rightMotor, 0.7);
+        moveForward(leftMotor, rightMotor, 1.7);
 
-        // Task 8: Show a visual response in response to the command received from the Bluetooth module
-        if (hm10.readable())
-        {
-            command = hm10.getc(); // Read command from Bluetooth
-            // Display command on LCD
-            lcd.cls(); // Clear the screen
-            lcd.locate(0, 3);
-            lcd.printf("Command: %c", command);
-        }
+        // Stop buggy
+        leftMotor.stop();
+        rightMotor.stop();
+        wait(0);
     }
 }

@@ -76,7 +76,7 @@ public:
     float getSpeed()
     {
         float wheelDiameter = 0.0834f; // in meters
-        int gearRatio = 2;             // 2:1 gear ratio
+        int gearRatio = 12.75;         // 2:1 gear ratio
         int cpr = 512;                 // Encoder counts per revolution
 
         // Reset and start timer for sampling period
