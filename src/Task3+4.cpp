@@ -95,9 +95,7 @@ int main()
         leftMotor.setDutyCycle(leftPotValue);
         rightMotor.setDutyCycle(rightPotValue);
 
-        // Clear the screen before updating
         lcd.cls();
-
         // Display the duty cycles on the LCD
         lcd.locate(0, 0);
         lcd.printf("Left Motor: %.2f%%", leftPotValue * 100);
