@@ -4,8 +4,8 @@
 
 PwmOut pwm1(PB_14);
 PwmOut pwm2(PB_13);
-DigitalOut bipolar1(PC_14);
-DigitalOut bipolar2(PC_15);
+DigitalOut bipolar1(PA_13);
+DigitalOut bipolar2(PA_14);
 DigitalOut enablePin(PC_8);
 DigitalOut direction1(PC_5);
 DigitalOut direction2(PC_6);
@@ -21,11 +21,8 @@ char command;
 
 // Constants for movement
 const float FORWARD_SPEED = 0.7f;
-const float TURN_SPEED = 0.7f;
-const float STOP_SPEED = 0.5f;   // Assuming 0.5 is the neutral duty cycle for stopping
-const float FORWARD_TIME = 1.7f; // Adjust based on actual requirement
-const float TURN_TIME = 0.70f;   // Adjust based on actual requirement
-const float STOP_TIME = 0.5f;    // Time to pause after each action
+const float STOP_SPEED = 0.5f; // Assuming 0.5 is the neutral duty cycle for stopping
+const float STOP_TIME = 0.5f;  // Time to pause after each action
 
 class Motor
 {
@@ -121,31 +118,31 @@ public:                                              // Public declarations
     }
 };
 
-void moveForward(Motor &leftMotor, Motor &rightMotor)
+void moveForward(Motor &leftMotor, Motor &rightMotor, float time)
 {
     leftMotor.setDutyCycle(FORWARD_SPEED);
     rightMotor.setDutyCycle(FORWARD_SPEED);
-    wait(FORWARD_TIME);
+    wait(time);
     leftMotor.setDutyCycle(STOP_SPEED);
     rightMotor.setDutyCycle(STOP_SPEED);
     wait(STOP_TIME);
 }
 
-void turnRight(Motor &leftMotor, Motor &rightMotor)
+void turnRight(Motor &leftMotor, Motor &rightMotor, float time)
 {
-    leftMotor.setDutyCycle(TURN_SPEED);
+    leftMotor.setDutyCycle(FORWARD_SPEED);
     rightMotor.setDutyCycle(STOP_SPEED); // Assuming right turn means slowing down or stopping the right motor
-    wait(TURN_TIME);
+    wait(time);
     leftMotor.setDutyCycle(STOP_SPEED);
     rightMotor.setDutyCycle(STOP_SPEED);
     wait(STOP_TIME);
 }
 
-void turnLeft(Motor &leftMotor, Motor &rightMotor)
+void turnLeft(Motor &leftMotor, Motor &rightMotor, float time)
 {
     leftMotor.setDutyCycle(STOP_SPEED); // Assuming left turn means slowing down or stopping the left motor
-    rightMotor.setDutyCycle(TURN_SPEED);
-    wait(TURN_TIME);
+    rightMotor.setDutyCycle(FORWARD_SPEED);
+    wait(time);
     leftMotor.setDutyCycle(STOP_SPEED);
     rightMotor.setDutyCycle(STOP_SPEED);
     wait(STOP_TIME);
@@ -164,7 +161,6 @@ int main()
     Motor leftMotor(pwm1, leftEncoder, 'L');
     Motor rightMotor(pwm2, rightEncoder, 'R');
 
-    char command;
     while (true)
     {
         // Square
