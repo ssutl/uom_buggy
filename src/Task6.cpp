@@ -164,25 +164,27 @@ int main()
     while (true)
     {
         // Square
-        moveForward(leftMotor, rightMotor, 1.7);
-        turnRight(leftMotor, rightMotor, 0.7);
-        moveForward(leftMotor, rightMotor, 1.7);
-        turnRight(leftMotor, rightMotor, 0.7);
-        moveForward(leftMotor, rightMotor, 1.7);
-        turnRight(leftMotor, rightMotor, 0.7);
-        moveForward(leftMotor, rightMotor, 1.7);
+        moveForward(leftMotor, rightMotor, 1.95);
+        turnRight(leftMotor, rightMotor, 0.9);
+        moveForward(leftMotor, rightMotor, 1.80);
+        // Fine tuning
+
+        turnRight(leftMotor, rightMotor, 0.95);
+        moveForward(leftMotor, rightMotor, 1.75);
+        turnRight(leftMotor, rightMotor, 0.95);
+        moveForward(leftMotor, rightMotor, 1.85);
 
         // Turn buggy around
-        turnRight(leftMotor, rightMotor, 1.2);
+        turnLeft(leftMotor, rightMotor, 1.5);
 
         // Make buggy trace the square
-        moveForward(leftMotor, rightMotor, 1.7);
-        turnLeft(leftMotor, rightMotor, 0.7);
-        moveForward(leftMotor, rightMotor, 1.7);
-        turnLeft(leftMotor, rightMotor, 0.7);
-        moveForward(leftMotor, rightMotor, 1.7);
-        turnLeft(leftMotor, rightMotor, 0.7);
-        moveForward(leftMotor, rightMotor, 1.7);
+        moveForward(leftMotor, rightMotor, 1.95);
+        turnLeft(leftMotor, rightMotor, 0.95);
+        moveForward(leftMotor, rightMotor, 1.85);
+        turnLeft(leftMotor, rightMotor, 0.95);
+        moveForward(leftMotor, rightMotor, 1.85);
+        turnLeft(leftMotor, rightMotor, 0.95);
+        moveForward(leftMotor, rightMotor, 1.90);
 
         // Stop buggy
         leftMotor.stop();

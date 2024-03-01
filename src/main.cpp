@@ -4,8 +4,8 @@
 
 PwmOut pwm1(PB_14);
 PwmOut pwm2(PB_13);
-DigitalOut bipolar1(PC_14);
-DigitalOut bipolar2(PC_15);
+DigitalOut bipolar1(PA_13);
+DigitalOut bipolar2(PA_14);
 DigitalOut enablePin(PC_8);
 DigitalOut direction1(PC_5);
 DigitalOut direction2(PC_6);
