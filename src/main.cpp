@@ -62,9 +62,30 @@ public:
         return dutyCycle;
     }
 
+    float getRPM()
+    {
+        float elapsedTime = timer.read();
+        timer.reset();
+        int currentPulseCount = encoder.getPulses();
+        int pulseDifference = currentPulseCount - previousPulseCount;
+        previousPulseCount = currentPulseCount;
+        float revolutions = static_cast<float>(pulseDifference) / static_cast<float>(512);
+        float rps = revolutions / elapsedTime;
+        float rpm = rps * 60.0f;
+        return rpm;
+    }
+
+    int getPulse()
+    {
+        return encoder.getPulses();
+    }
+
     // New method to calculate and return the motor speed
     float getSpeed()
     {
+        // Wheel velocity in m/s
+        wheelVelocity = (getRPM() * 2 * 3.14159 * (0.082 / 2)) / 60;
+        return wheelVelocity;
     }
 };
 
@@ -97,4 +118,15 @@ int main()
     {
         bluetoothCallback();
     }
+}
+
+void turnBuggy()
+{
+    // Turn the buggy
+    leftMotor.setDutyCycle(0.3f);
+    rightMotor.setDutyCycle(0.7f);
+    wait(1.2);
+    leftMotor.setDutyCycle(0.5f);
+    rightMotor.setDutyCycle(0.5f);
+    wait(1.0);
 }
