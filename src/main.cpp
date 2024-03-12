@@ -2,6 +2,7 @@
 #include "QEI.h"
 #include "C12832.h"
 // Random comment
+// Doing some changes
 
 PwmOut pwm1(PB_14);
 PwmOut pwm2(PB_13);
