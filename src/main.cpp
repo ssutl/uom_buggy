@@ -21,6 +21,8 @@ QEI rightEncoder(PB_12, PB_2, NC, 512, QEI::X2_ENCODING);
 
 Timer t;
 
+// comment
+
 class Motor
 {
 private:
