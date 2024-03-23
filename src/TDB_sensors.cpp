@@ -4,6 +4,7 @@
 
 C12832 lcd(D11, D13, D12, D7, D10);
 Serial pc(D1, D0); // Initialize serial connection to PC
+// Comment
 
 int main()
 {
