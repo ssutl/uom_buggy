@@ -19,6 +19,19 @@ Serial hm10(PA_11, PA_12); // UART6 TX,RX
 QEI leftEncoder(PB_1, PB_15, NC, 512, QEI::X2_ENCODING);
 QEI rightEncoder(PB_12, PB_2, NC, 512, QEI::X2_ENCODING);
 
+DigitalIn sensor1(1);
+DigitalIn sensor2(2);
+DigitalIn sensor3(3);
+DigitalIn sensor4(4);
+DigitalIn sensor5(5);
+
+float Kp = 0.2;  // Proportional gain
+float Ki = 0.01; // Integral gain
+float Kd = 0.05; // Derivative gain
+
+float previousError = 0;
+float integral = 0;
+
 Timer t;
 
 // comment
@@ -94,12 +107,80 @@ public:
     }
 };
 
+void turnBuggy()
+{
+    // Turn the buggy
+    leftMotor.setDutyCycle(0.3f);
+    rightMotor.setDutyCycle(0.7f);
+    wait(1.2);
+    leftMotor.setDutyCycle(0.5f);
+    rightMotor.setDutyCycle(0.5f);
+    wait(1.0);
+}
+
+// Function to calculate alignment error based on sensor input
+float calculatePositionalError()
+{
+    float error = 0;
+    // Example sensor values and weights (adjust based on your setup)
+    if (sensor1)
+        error += -2;
+    if (sensor2)
+        error += -1;
+    if (sensor4)
+        error += 1;
+    if (sensor5)
+        error += 2;
+    // Sensor 3 is the reference, no error contribution
+
+    return error;
+}
+
 void bluetoothCallback()
 {
     if (hm10.readable())
     {
         char command = hm10.getc(); // Read command from Bluetooth
-        pc.printf("Command received: %c\n", command);
+        if (command = "t")
+        {
+            turnBuggy();
+        }
+    }
+}
+
+// PID calculation
+float calculatePID(float error)
+{
+    float derivative = error - previousError;
+    integral += error;
+    float output = Kp * error + Ki * integral + Kd * derivative;
+    previousError = error;
+    return output;
+}
+
+void adjustMotors(float pidOutput, float error)
+{
+    // Default speed
+    float defaultSpeed = 0.7;
+
+    // If there is no error, keep the speed at 0.7 for both motors
+    if (error == 0)
+    {
+        leftMotor.setDutyCycle(defaultSpeed);
+        rightMotor.setDutyCycle(defaultSpeed);
+    }
+    else
+    {
+        // Adjust speeds based on PID output when there is an error
+        float leftMotorSpeed = defaultSpeed - pidOutput;  // Adjust left motor speed
+        float rightMotorSpeed = defaultSpeed + pidOutput; // Adjust right motor speed
+
+        // Ensure motor speeds are within bounds [0.0, 1.0]
+        leftMotorSpeed = std::min(std::max(leftMotorSpeed, 0.0f), 1.0f);
+        rightMotorSpeed = std::min(std::max(rightMotorSpeed, 0.0f), 1.0f);
+
+        leftMotor.setDutyCycle(leftMotorSpeed);
+        rightMotor.setDutyCycle(rightMotorSpeed);
     }
 }
 
@@ -107,8 +188,8 @@ int main()
 {
     // Pin configuration for bipolar mode
     enablePin.write(1);
-    bipolarLeft.write(1);
-    bipolarRight.write(1);
+    bipolar1.write(1);
+    bipolar2.write(1);
     direction1.write(1);
     direction2.write(1);
 
@@ -119,19 +200,16 @@ int main()
     Motor rightMotor(pwm2, rightEncoder, 'R');
 
     char command;
+    // Set initial motor speeds to 0.7
+    leftMotor.setDutyCycle(0.7f);
+    rightMotor.setDutyCycle(0.7f);
+
     while (true)
     {
-        bluetoothCallback();
-    }
-}
+        float error = calculateError();        // Calculate the alignment error
+        float pidOutput = calculatePID(error); // Calculate PID output based on the error
+        adjustMotors(pidOutput, error);        // Adjust motors based on PID output and error
 
-void turnBuggy()
-{
-    // Turn the buggy
-    leftMotor.setDutyCycle(0.3f);
-    rightMotor.setDutyCycle(0.7f);
-    wait(1.2);
-    leftMotor.setDutyCycle(0.5f);
-    rightMotor.setDutyCycle(0.5f);
-    wait(1.0);
+        wait_ms(10); // Adjust the delay as needed
+    }
 }
