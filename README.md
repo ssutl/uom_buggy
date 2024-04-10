@@ -99,6 +99,11 @@ int main()
     bipolar2.write(1);
     direction1.write(1);
     direction2.write(1);
+    LineFollowSensorSwitch1.write(1);
+    LineFollowSensorSwitch2.write(1);
+    LineFollowSensorSwitch3.write(1);
+    LineFollowSensorSwitch4.write(1);
+    LineFollowSensorSwitch5.write(1);
 
     hm10.baud(9600); // Set the baud rate to 9600
 
@@ -106,18 +111,41 @@ int main()
     Motor leftMotor(pwm1, leftEncoder, 'L');
     Motor rightMotor(pwm2, rightEncoder, 'R');
 
-    char command;
-    // Set initial motor speeds to 0.7
-    leftMotor.setDutyCycle(0.7f);
-    rightMotor.setDutyCycle(0.7f);
-
     while (true)
     {
-        float error = calculateError();        // Calculate the alignment error
-        float pidOutput = calculatePID(error); // Calculate PID output based on the error
-        adjustMotors(pidOutput, error);        // Adjust motors based on PID output and error
+        calculatePositionalError();
 
-        wait_ms(10); // Adjust the delay as needed
+        switch (mode)
+        {
+        case STOPPED:
+            leftMotor.stop();
+            rightMotor.stop();
+            break;
+        case FOLLOW_LINE:
+            calculatePID();
+            motorPIDcontrol(leftMotor, rightMotor);
+            break;
+        case TURN:
+            leftMotor.setDutyCycle(0.3f);
+            rightMotor.setDutyCycle(0.7f);
+            wait(1.2);
+            leftMotor.setDutyCycle(0.5f);
+            rightMotor.setDutyCycle(0.5f);
+            wait(1.0);
+            mode = FOLLOW_LINE;
+            break;
+        }
+
+        // Print sensor values on LCD
+        lcd.cls();
+        lcd.locate(0, 0);
+        // Print error value
+        lcd.printf("Error: %d", errorValue);
+        // print the current mode below actual name
+        lcd.locate(0, 10);
+        lcd.printf("Mode: %d", mode);
+
+        wait(0.1);
     }
 }
 ```
