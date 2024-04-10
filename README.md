@@ -93,19 +93,7 @@ Here's an example of the main function setup in the code:
 
 int main()
 {
-    // Pin configuration for bipolar mode
-    enablePin.write(1);
-    bipolar1.write(1);
-    bipolar2.write(1);
-    direction1.write(1);
-    direction2.write(1);
-    LineFollowSensorSwitch1.write(1);
-    LineFollowSensorSwitch2.write(1);
-    LineFollowSensorSwitch3.write(1);
-    LineFollowSensorSwitch4.write(1);
-    LineFollowSensorSwitch5.write(1);
-
-    hm10.baud(9600); // Set the baud rate to 9600
+    // Enable/Disable pins
 
     // Create Motor instances for left and right motors
     Motor leftMotor(pwm1, leftEncoder, 'L');
@@ -135,16 +123,6 @@ int main()
             mode = FOLLOW_LINE;
             break;
         }
-
-        // Print sensor values on LCD
-        lcd.cls();
-        lcd.locate(0, 0);
-        // Print error value
-        lcd.printf("Error: %d", errorValue);
-        // print the current mode below actual name
-        lcd.locate(0, 10);
-        lcd.printf("Mode: %d", mode);
-
         wait(0.1);
     }
 }
