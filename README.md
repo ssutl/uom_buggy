@@ -80,7 +80,26 @@ Handles Bluetooth communication, allowing remote interaction with the buggy.
 |----------------------|--------------------------------------------------------------|----------------------------------------------------|
 | bluetoothCallback    | Callback function to handle Bluetooth commands.              | `hm10.attach(&bluetoothCallback);`                 |
 
+## Basic Setup
 
+Here's an example of the main function setup in the code:
+
+```cpp
+#include "mbed.h"
+// Include other necessary headers here
+
+// Instantiate global instances of your classes here
+// Example: Motor leftMotor(pwmPin, encoderPin, 'L');
+
+int main() {
+    // Set up code and initializations here
+
+    while (true) {
+        // Main loop code
+        // Example: Call functions to read sensors, adjust motors, etc.
+    }
+}
+```
 
 
 
