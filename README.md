@@ -13,8 +13,7 @@ This codebase contains the software which controls an autonomous buggy. Within t
   * [Getting Started](#getting-started)
     + [Integration](#integration)
   * [Classes and Functions](#classes-and-functions)
-  * [Contributing](#contributing)
-  * [License](#license)
+  * [Basic setup](#basic-setup)
 
 ## Features
 
