@@ -114,13 +114,7 @@ int main()
             motorPIDcontrol(leftMotor, rightMotor);
             break;
         case TURN:
-            leftMotor.setDutyCycle(0.3f);
-            rightMotor.setDutyCycle(0.7f);
-            wait(1.2);
-            leftMotor.setDutyCycle(0.5f);
-            rightMotor.setDutyCycle(0.5f);
-            wait(1.0);
-            mode = FOLLOW_LINE;
+            turnBuggy(leftMotor, rightMotor);
             break;
         }
         wait(0.1);
