@@ -5,6 +5,17 @@
 
 This codebase contains the software which controls an autonomous buggy. Within this codebase you can find functionalities such as controlling motors, reading sensors, implementing PID control, and Bluetooth communication.
 
+## Table of Contents
+- [Line Following Buggy](#line-following-buggy)
+  * [Table of Contents](#table-of-contents)
+  * [Features](#features)
+  * [Requirements](#requirements)
+  * [Getting Started](#getting-started)
+    + [Integration](#integration)
+  * [Modules](#modules)
+  * [Contributing](#contributing)
+  * [License](#license)
+
 ## Features
 
 - **Motor Control**: Control the speed and direction of the buggy's motors.
@@ -19,9 +30,12 @@ This codebase contains the software which controls an autonomous buggy. Within t
 
 ## Getting Started
 
+### Integration
+
 1. **Integration**: Clone or download this repository.
-2. **Examples**: Explore example projects included in the repository.
-3. **Building from Source**: Compile the code using an appropriate IDE or command-line tools.
+2. **Library Dependencies**:
+   - Download the [QEI.h library](https://os.mbed.com/users/aberk/code/QEI/file/5c2ad81551aa/QEI.h/) and include it in your project.
+   - Download the [C12832 LCD library](https://os.mbed.com/teams/components/code/C12832/docs/tip/C12832_8h_source.html) and include it in your project.
 
 ## Modules
 
