@@ -12,7 +12,7 @@ This codebase contains the software which controls an autonomous buggy. Within t
   * [Requirements](#requirements)
   * [Getting Started](#getting-started)
     + [Integration](#integration)
-  * [Class Declarations](#class-declarations)
+  * [Classes and Functions](#classes-and-functions)
   * [Contributing](#contributing)
   * [License](#license)
 
@@ -37,17 +37,14 @@ This codebase contains the software which controls an autonomous buggy. Within t
    - Download the [QEI.h library](https://os.mbed.com/users/aberk/code/QEI/file/5c2ad81551aa/QEI.h/) and include it in your project.
    - Download the [C12832 LCD library](https://os.mbed.com/teams/components/code/C12832/docs/tip/C12832_8h_source.html) and include it in your project.
 
-## Class Declarations
-
-**Class Diagrams:**
-*Here you would insert an image of the class diagrams.*
+## Classes and Functions
 
 ### Motor Class
 
 Controls the operation of a motor using PWM output and encoder feedback.
 
-| Function Name   | Description                                               | How to Call                       |
-|-----------------|-----------------------------------------------------------|-----------------------------------|
+| Function Name   | Description                                               | How to Call                         |
+|-----------------|-----------------------------------------------------------|-------------------------------------|
 | Motor           | Constructor to initialize a motor with given parameters.  | `Motor motorName(pwmPin, encoderPin, identifier);` |
 | setDutyCycle    | Sets the PWM duty cycle for the motor.                    | `motorName.setDutyCycle(newDutyCycle);` |
 | stop            | Stops the motor by setting the duty cycle to neutral.     | `motorName.stop();` |
@@ -56,12 +53,36 @@ Controls the operation of a motor using PWM output and encoder feedback.
 | getPulse        | Returns the pulse count from the encoder.                 | `int pulseCount = motorName.getPulse();` |
 | getSpeed        | Calculates and returns the motor's speed in m/s.          | `float speed = motorName.getSpeed();` |
 
-*Note: More class declarations would follow here based on your other classes.*
+### PID Control Functions
 
-## Contributing
+Provides functionality for calculating PID values and adjusting motor control based on sensor input.
 
-Contributions to this project are welcome! If you have suggestions for improvements or new features, feel free to open an issue or submit a pull request.
+| Function Name        | Description                                                  | How to Call                                        |
+|----------------------|--------------------------------------------------------------|----------------------------------------------------|
+| calculatePID         | Calculates the PID value based on error.                     | `float pidValue = calculatePID(error);`            |
+| calculatePositionalError | Calculates the error based on sensor readings.            | `float error = calculatePositionalError();`        |
+| adjustMotors         | Adjusts the motor speeds based on the provided parameters.   | `adjustMotors(pidOutput, error);`                  |
 
-## License
+### Motor Control Functions
 
-This code is licensed under the [MIT License](LICENSE).
+Contains functions to control the movements and adjustments of the buggy's motors.
+
+| Function Name        | Description                                                  | How to Call                                        |
+|----------------------|--------------------------------------------------------------|----------------------------------------------------|
+| turnBuggy            | Commands to turn the buggy.                                  | `turnBuggy();`                                     |
+| motorPIDcontrol      | Adjusts the motor speeds based on the PID output and error.  | `motorPIDcontrol(pidOutput, error);`               |
+
+### Bluetooth Communication Functions
+
+Handles Bluetooth communication, allowing remote interaction with the buggy.
+
+| Function Name        | Description                                                  | How to Call                                        |
+|----------------------|--------------------------------------------------------------|----------------------------------------------------|
+| bluetoothCallback    | Callback function to handle Bluetooth commands.              | `hm10.attach(&bluetoothCallback);`                 |
+
+
+
+
+
+
+
