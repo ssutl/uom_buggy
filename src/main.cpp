@@ -19,12 +19,18 @@ Serial hm10(PA_11, PA_12); // UART6 TX,RX
 QEI leftEncoder(PB_7, PB_15, NC, 512, QEI::X2_ENCODING);
 QEI rightEncoder(PB_12, PB_2, NC, 512, QEI::X2_ENCODING);
 
-DigitalIn LineFollowSensor0(PA_16);
-DigitalIn LineFollowSensor1(PA_17);
-DigitalIn LineFollowSensor2(PA_18);
-DigitalIn LineFollowSensor3(PA_19);
-DigitalIn LineFollowSensor4(PA_20);
-DigitalIn LineFollowSensor5(PA_21);
+DigitalOut LineFollowSensorSwitch1(PC_12);
+DigitalOut LineFollowSensorSwitch2(PA_15);
+DigitalOut LineFollowSensorSwitch3(PC_11);
+DigitalOut LineFollowSensorSwitch4(PD_2);
+DigitalOut LineFollowSensorSwitch5(PC_9);
+
+// Line sensor1 being the leftmost sensor
+DigitalIn LineFollowSensor1(PC_3);
+DigitalIn LineFollowSensor2(PC_2);
+DigitalIn LineFollowSensor3(PC_4);
+DigitalIn LineFollowSensor4(PB_1);
+DigitalIn LineFollowSensor5(PC_5);
 int LFSensor[5] = {0, 0, 0, 0, 0};
 
 float Kp = 0.075; // Proportional gain (should be between 0 and 0.075)
@@ -117,12 +123,14 @@ public:
 // If buggy is to the left the error will be positive else if the buggy is to the right the error will be negative
 void calculatePositionalError()
 {
+    // If the reading is 0 the sensor is detecting the line
+    // Need to invert the readings
 
-    LFSensor[0] = LineFollowSensor0.read();
-    LFSensor[1] = LineFollowSensor1.read();
-    LFSensor[2] = LineFollowSensor2.read();
-    LFSensor[3] = LineFollowSensor3.read();
-    LFSensor[4] = LineFollowSensor4.read();
+    LFSensor[0] = !LineFollowSensor1.read();
+    LFSensor[1] = !LineFollowSensor2.read();
+    LFSensor[2] = !LineFollowSensor3.read();
+    LFSensor[3] = !LineFollowSensor4.read();
+    LFSensor[4] = !LineFollowSensor5.read();
 
     if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 1))
         errorValue = 4;
@@ -150,10 +158,6 @@ void calculatePositionalError()
 
     else if ((LFSensor[0] == 1) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
         errorValue = -4;
-
-    // If none of the sensors dont detect anything stop the buggy
-    else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
-        mode = STOPPED;
 }
 
 void bluetoothCallback()
@@ -195,7 +199,7 @@ void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
     else if (errorValue < 0)
     {
         // leftMotor.setDutyCycle(0.7f - error * Kp);
-        rightMotor.setDutyCycle(0.7f + PIDvalue);
+        rightMotor.setDutyCycle(0.7f - PIDvalue);
     }
 }
 
@@ -207,15 +211,17 @@ int main()
     bipolar2.write(1);
     direction1.write(1);
     direction2.write(1);
+    LineFollowSensorSwitch1.write(1);
+    LineFollowSensorSwitch2.write(1);
+    LineFollowSensorSwitch3.write(1);
+    LineFollowSensorSwitch4.write(1);
+    LineFollowSensorSwitch5.write(1);
 
     hm10.baud(9600); // Set the baud rate to 9600
 
     // Create Motor instances for left and right motors
     Motor leftMotor(pwm1, leftEncoder, 'L');
     Motor rightMotor(pwm2, rightEncoder, 'R');
-
-    leftMotor.setDutyCycle(0.7f);
-    rightMotor.setDutyCycle(0.7f);
 
     while (true)
     {
@@ -245,15 +251,12 @@ int main()
         // Print sensor values on LCD
         lcd.cls();
         lcd.locate(0, 0);
-        lcd.printf("LFSensor0: %d", LFSensor[0]);
+        // Print error value
+        lcd.printf("Error: %d", errorValue);
+        // print the current mode below actual name
         lcd.locate(0, 10);
-        lcd.printf("LFSensor1: %d", LFSensor[1]);
-        lcd.locate(0, 20);
-        lcd.printf("LFSensor2: %d", LFSensor[2]);
-        lcd.locate(0, 30);
-        lcd.printf("LFSensor3: %d", LFSensor[3]);
-        lcd.locate(0, 40);
-        lcd.printf("LFSensor4: %d", LFSensor[4]);
-        wait_ms(10); // Adjust the delay as needed
+        lcd.printf("Mode: %d", mode);
+
+        wait(0.1);
     }
 }
