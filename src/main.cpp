@@ -10,27 +10,50 @@ PwmOut pwm2(PB_13);
 DigitalOut bipolar1(PA_13);
 DigitalOut bipolar2(PA_14);
 DigitalOut enablePin(PC_8);
-DigitalOut direction1(PC_5);
+DigitalOut direction1(PC_10);
 DigitalOut direction2(PC_6);
 C12832 lcd(D11, D13, D12, D7, D10);
 Serial pc(D1, D0);         // Initialize serial connection to PC
 Serial hm10(PA_11, PA_12); // UART6 TX,RX
 
-QEI leftEncoder(PB_1, PB_15, NC, 512, QEI::X2_ENCODING);
+QEI leftEncoder(PB_7, PB_15, NC, 512, QEI::X2_ENCODING);
 QEI rightEncoder(PB_12, PB_2, NC, 512, QEI::X2_ENCODING);
 
-DigitalIn sensor1(1);
-DigitalIn sensor2(2);
-DigitalIn sensor3(3);
-DigitalIn sensor4(4);
-DigitalIn sensor5(5);
+DigitalOut LineFollowSensorSwitch1(PC_12);
+DigitalOut LineFollowSensorSwitch2(PA_15);
+DigitalOut LineFollowSensorSwitch3(PC_11);
+DigitalOut LineFollowSensorSwitch4(PD_2);
+DigitalOut LineFollowSensorSwitch5(PC_9);
 
-float Kp = 0.2;  // Proportional gain
-float Ki = 0.01; // Integral gain
-float Kd = 0.05; // Derivative gain
+// Line sensor1 being the leftmost sensor
+DigitalIn LineFollowSensor1(PC_3);
+DigitalIn LineFollowSensor2(PC_2);
+DigitalIn LineFollowSensor3(PC_4);
+DigitalIn LineFollowSensor4(PB_1);
+DigitalIn LineFollowSensor5(PC_5);
+int LFSensor[5] = {0, 0, 0, 0, 0};
+
+float Kp = 0.075; // Proportional gain (should be between 0 and 0.075)
+float Ki = 0.01;  // Integral gain
+float Kd = 0.05;  // Derivative gain
+int errorValue = 0;
 
 float previousError = 0;
 float integral = 0;
+float derivative = 0;
+float P = 0;
+float I = 0;
+float D = 0;
+float PIDvalue = 0;
+
+enum Mode
+{
+    STOPPED,
+    FOLLOW_LINE,
+    TURN
+};
+
+Mode mode = FOLLOW_LINE; // Declare mode as a global variable
 
 Timer t;
 
@@ -74,12 +97,6 @@ public:
         setDutyCycle(0.5f); // Stop the motor
     }
 
-    // Member function to get the PWM value
-    float getPwmValue() const
-    {
-        return dutyCycle;
-    }
-
     float getRPM()
     {
         float elapsedTime = timer.read();
@@ -93,11 +110,6 @@ public:
         return rpm;
     }
 
-    int getPulse()
-    {
-        return encoder.getPulses();
-    }
-
     // New method to calculate and return the motor speed
     float getSpeed()
     {
@@ -107,33 +119,45 @@ public:
     }
 };
 
-void turnBuggy()
-{
-    // Turn the buggy
-    leftMotor.setDutyCycle(0.3f);
-    rightMotor.setDutyCycle(0.7f);
-    wait(1.2);
-    leftMotor.setDutyCycle(0.5f);
-    rightMotor.setDutyCycle(0.5f);
-    wait(1.0);
-}
-
 // Function to calculate alignment error based on sensor input
-float calculatePositionalError()
+// If buggy is to the left the error will be positive else if the buggy is to the right the error will be negative
+void calculatePositionalError()
 {
-    float error = 0;
-    // Example sensor values and weights (adjust based on your setup)
-    if (sensor1)
-        error += -2;
-    if (sensor2)
-        error += -1;
-    if (sensor4)
-        error += 1;
-    if (sensor5)
-        error += 2;
-    // Sensor 3 is the reference, no error contribution
+    // If the reading is 0 the sensor is detecting the line
+    // Need to invert the readings
 
-    return error;
+    LFSensor[0] = !LineFollowSensor1.read();
+    LFSensor[1] = !LineFollowSensor2.read();
+    LFSensor[2] = !LineFollowSensor3.read();
+    LFSensor[3] = !LineFollowSensor4.read();
+    LFSensor[4] = !LineFollowSensor5.read();
+
+    if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 1))
+        errorValue = 4;
+
+    else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 1) && (LFSensor[4] == 1))
+        errorValue = 3;
+
+    else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 1) && (LFSensor[4] == 0))
+        errorValue = 2;
+
+    else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 1) && (LFSensor[3] == 1) && (LFSensor[4] == 0))
+        errorValue = 1;
+
+    else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 1) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
+        errorValue = 0;
+
+    else if ((LFSensor[0] == 0) && (LFSensor[1] == 1) && (LFSensor[2] == 1) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
+        errorValue = -1;
+
+    else if ((LFSensor[0] == 0) && (LFSensor[1] == 1) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
+        errorValue = -2;
+
+    else if ((LFSensor[0] == 1) && (LFSensor[1] == 1) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
+        errorValue = -3;
+
+    else if ((LFSensor[0] == 1) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
+        errorValue = -4;
 }
 
 void bluetoothCallback()
@@ -141,47 +165,53 @@ void bluetoothCallback()
     if (hm10.readable())
     {
         char command = hm10.getc(); // Read command from Bluetooth
-        if (command = "t")
+        if (command == 't')
         {
-            turnBuggy();
+            mode = TURN;
         }
     }
 }
 
 // PID calculation
-float calculatePID(float error)
+void calculatePID()
 {
-    float derivative = error - previousError;
-    integral += error;
-    float output = Kp * error + Ki * integral + Kd * derivative;
-    previousError = error;
-    return output;
+    P = errorValue;
+    I = I + errorValue;
+    D = errorValue - previousError;
+    PIDvalue = Kp * P + Ki * I + Kd * D;
+    previousError = errorValue;
 }
 
-void adjustMotors(float pidOutput, float error)
+void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
 {
-    // Default speed
-    float defaultSpeed = 0.7;
-
-    // If there is no error, keep the speed at 0.7 for both motors
-    if (error == 0)
+    if (errorValue == 0)
     {
-        leftMotor.setDutyCycle(defaultSpeed);
-        rightMotor.setDutyCycle(defaultSpeed);
+        leftMotor.setDutyCycle(0.7f);
+        rightMotor.setDutyCycle(0.7f);
     }
-    else
+    // If the buggy is on the left side of the line, turn the robot to the right
+    else if (errorValue > 0)
     {
-        // Adjust speeds based on PID output when there is an error
-        float leftMotorSpeed = defaultSpeed - pidOutput;  // Adjust left motor speed
-        float rightMotorSpeed = defaultSpeed + pidOutput; // Adjust right motor speed
-
-        // Ensure motor speeds are within bounds [0.0, 1.0]
-        leftMotorSpeed = std::min(std::max(leftMotorSpeed, 0.0f), 1.0f);
-        rightMotorSpeed = std::min(std::max(rightMotorSpeed, 0.0f), 1.0f);
-
-        leftMotor.setDutyCycle(leftMotorSpeed);
-        rightMotor.setDutyCycle(rightMotorSpeed);
+        leftMotor.setDutyCycle(0.7f + PIDvalue);
     }
+
+    // If the buggy is on the right side of the line, turn the robot to the left
+    else if (errorValue < 0)
+    {
+        // leftMotor.setDutyCycle(0.7f - error * Kp);
+        rightMotor.setDutyCycle(0.7f - PIDvalue);
+    }
+}
+
+void turnBuggy(Motor &leftMotor, Motor &rightMotor)
+{
+    leftMotor.setDutyCycle(0.3f);
+    rightMotor.setDutyCycle(0.7f);
+    wait(1.2);                    // Adjust time as necessary for the turn
+    leftMotor.setDutyCycle(0.5f); // Stop turning by setting motors to neutral
+    rightMotor.setDutyCycle(0.5f);
+    wait(1.0);          // Adjust waiting time as necessary
+    mode = FOLLOW_LINE; // Change mode back to FOLLOW_LINE after the turn is complete
 }
 
 int main()
@@ -192,6 +222,11 @@ int main()
     bipolar2.write(1);
     direction1.write(1);
     direction2.write(1);
+    LineFollowSensorSwitch1.write(1);
+    LineFollowSensorSwitch2.write(1);
+    LineFollowSensorSwitch3.write(1);
+    LineFollowSensorSwitch4.write(1);
+    LineFollowSensorSwitch5.write(1);
 
     hm10.baud(9600); // Set the baud rate to 9600
 
@@ -199,17 +234,34 @@ int main()
     Motor leftMotor(pwm1, leftEncoder, 'L');
     Motor rightMotor(pwm2, rightEncoder, 'R');
 
-    char command;
-    // Set initial motor speeds to 0.7
-    leftMotor.setDutyCycle(0.7f);
-    rightMotor.setDutyCycle(0.7f);
-
     while (true)
     {
-        float error = calculateError();        // Calculate the alignment error
-        float pidOutput = calculatePID(error); // Calculate PID output based on the error
-        adjustMotors(pidOutput, error);        // Adjust motors based on PID output and error
+        calculatePositionalError();
 
-        wait_ms(10); // Adjust the delay as needed
+        switch (mode)
+        {
+        case STOPPED:
+            leftMotor.stop();
+            rightMotor.stop();
+            break;
+        case FOLLOW_LINE:
+            calculatePID();
+            motorPIDcontrol(leftMotor, rightMotor);
+            break;
+        case TURN:
+            turnBuggy(leftMotor, rightMotor);
+            break;
+        }
+
+        // Print sensor values on LCD
+        lcd.cls();
+        lcd.locate(0, 0);
+        // Print error value
+        lcd.printf("Error: %d", errorValue);
+        // print the current mode below actual name
+        lcd.locate(0, 10);
+        lcd.printf("Mode: %d", mode);
+
+        wait(0.1);
     }
 }
