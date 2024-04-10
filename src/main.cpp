@@ -203,6 +203,17 @@ void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
     }
 }
 
+void turnBuggy(Motor &leftMotor, Motor &rightMotor)
+{
+    leftMotor.setDutyCycle(0.3f);
+    rightMotor.setDutyCycle(0.7f);
+    wait(1.2);                    // Adjust time as necessary for the turn
+    leftMotor.setDutyCycle(0.5f); // Stop turning by setting motors to neutral
+    rightMotor.setDutyCycle(0.5f);
+    wait(1.0);          // Adjust waiting time as necessary
+    mode = FOLLOW_LINE; // Change mode back to FOLLOW_LINE after the turn is complete
+}
+
 int main()
 {
     // Pin configuration for bipolar mode
@@ -238,13 +249,7 @@ int main()
             motorPIDcontrol(leftMotor, rightMotor);
             break;
         case TURN:
-            leftMotor.setDutyCycle(0.3f);
-            rightMotor.setDutyCycle(0.7f);
-            wait(1.2);
-            leftMotor.setDutyCycle(0.5f);
-            rightMotor.setDutyCycle(0.5f);
-            wait(1.0);
-            mode = FOLLOW_LINE;
+            turnBuggy(leftMotor, rightMotor);
             break;
         }
 
