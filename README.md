@@ -1,9 +1,7 @@
 # Stripe iOS SDK
 
-[![Language]([https://img.shields.io/cocoapods/v/Stripe.svg?style=flat)](http://cocoapods.org/?q=author%3Astripe%20name%3Astripe](https://img.shields.io/badge/language-c%2B%2B-blue
-))
-[![Framework]([https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage](https://img.shields.io/badge/framework-mbed-blue
-))
+[![Language]([))
+[![Framework]([https://img.shields.io/badge/framework-mbed-blue)])
 
 The Stripe iOS SDK makes it quick and easy to build an excellent payment experience in your iOS app. We provide powerful and customizable UI screens and elements that can be used out-of-the-box to collect your users' payment details. We also expose the low-level APIs that power those UIs so that you can build fully custom experiences.
 
