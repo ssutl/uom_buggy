@@ -91,12 +91,33 @@ Here's an example of the main function setup in the code:
 // Instantiate global instances of your classes here
 // Example: Motor leftMotor(pwmPin, encoderPin, 'L');
 
-int main() {
-    // Set up code and initializations here
+int main()
+{
+    // Pin configuration for bipolar mode
+    enablePin.write(1);
+    bipolar1.write(1);
+    bipolar2.write(1);
+    direction1.write(1);
+    direction2.write(1);
 
-    while (true) {
-        // Main loop code
-        // Example: Call functions to read sensors, adjust motors, etc.
+    hm10.baud(9600); // Set the baud rate to 9600
+
+    // Create Motor instances for left and right motors
+    Motor leftMotor(pwm1, leftEncoder, 'L');
+    Motor rightMotor(pwm2, rightEncoder, 'R');
+
+    char command;
+    // Set initial motor speeds to 0.7
+    leftMotor.setDutyCycle(0.7f);
+    rightMotor.setDutyCycle(0.7f);
+
+    while (true)
+    {
+        float error = calculateError();        // Calculate the alignment error
+        float pidOutput = calculatePID(error); // Calculate PID output based on the error
+        adjustMotors(pidOutput, error);        // Adjust motors based on PID output and error
+
+        wait_ms(10); // Adjust the delay as needed
     }
 }
 ```
