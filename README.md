@@ -1,10 +1,9 @@
-# Stripe iOS SDK
+# Line Following Buggy
 
 [![Language](https://img.shields.io/badge/language-C%2B%2B-blue)](https://www.cplusplus.com/)
 [![Framework](https://img.shields.io/badge/framework-Mbed-blue)](https://www.mbed.com/)
 
-
-The Stripe iOS SDK makes it quick and easy to build an excellent payment experience in your iOS app. We provide powerful and customizable UI screens and elements that can be used out-of-the-box to collect your users' payment details. We also expose the low-level APIs that power those UIs so that you can build fully custom experiences.
+This codebase contains the software which controls an autonomous buggy. Within this codebase you can find 
 
 Get started with our [📚 integration guides](https://stripe.com/docs/payments/accept-a-payment?platform=ios) and [example projects](#examples), or [📘 browse the SDK reference](https://stripe.dev/stripe-ios/docs/index.html).
 
