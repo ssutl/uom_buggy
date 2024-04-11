@@ -30,8 +30,6 @@ This codebase contains the software which controls an autonomous buggy. Within t
 
 ## Getting Started
 
-### Integration
-
 1. **Integration**: Clone this repository, or copy code from "main.cpp" into IDE of choice (E.g kiel studio).
 2. **Library Dependencies**:
    - Download the [mbed 2 library](https://os.mbed.com/users/mbed_official/code/mbed/builds/176b8275d35d) and include it in your project.
