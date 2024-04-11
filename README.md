@@ -74,9 +74,6 @@ Configurable parameters for PID control tuning. Can also adjust `Ki` or `Kd` to 
 **Example**: To enable PD control, set `Ki = 0` and adjust `Kp` and `Kd` as needed.
 
 
-This approach allows for experimentation with various control strategies to achieve optimal performance under different conditions.
-
-
 ### Motor Control Functions
 
 Contains functions to control the movements and adjustments of the buggy's motors.
