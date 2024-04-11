@@ -105,6 +105,8 @@ void bluetoothCallback()
         }
     }
 }
+
+hm10.attach(&bluetoothCallback);
 ```
 
 
