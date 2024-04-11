@@ -14,6 +14,7 @@ This codebase contains the software which controls an autonomous buggy. Within t
     + [Integration](#integration)
   * [Classes and Functions](#classes-and-functions)
   * [Basic setup](#basic-setup)
+  * [Example code](#example-code)
 
 ## Features
 
