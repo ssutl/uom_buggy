@@ -32,7 +32,7 @@ This codebase contains the software which controls an autonomous buggy. Within t
 
 ### Integration
 
-1. **Integration**: Clone this repository, or simply copy code from "main.cpp" into kiel studio environment.
+1. **Integration**: Clone this repository, or copy code from "main.cpp" into IDE of choice (E.g kiel studio).
 2. **Library Dependencies**:
    - Download the [QEI.h library](https://os.mbed.com/users/aberk/code/QEI/file/5c2ad81551aa/QEI.h/) and include it in your project.
    - Download the [C12832 LCD library](https://os.mbed.com/teams/components/code/C12832/docs/tip/C12832_8h_source.html) and include it in your project.
