@@ -60,7 +60,16 @@ Provides functionality for calculating PID values and adjusting motor control ba
 |----------------------|--------------------------------------------------------------|----------------------------------------------------|
 | calculatePID         | Calculates the PID value based on error.                     | `float pidValue = calculatePID(error);`            |
 | calculatePositionalError | Calculates the error based on sensor readings.            | `float error = calculatePositionalError();`        |
-| adjustMotors         | Adjusts the motor speeds based on the provided parameters.   | `adjustMotors(pidOutput, error);`                  |
+
+### PID Control Variables
+
+Configurable parameters for PID control tuning.
+
+| Variable | Description                     | Example Value |
+|----------|---------------------------------|---------------|
+| `Kp`     | Proportional gain coefficient.  | `0.2`         |
+| `Ki`     | Integral gain coefficient.      | `0.01`        |
+| `Kd`     | Derivative gain coefficient.    | `0.05`        |
 
 ### Motor Control Functions
 
