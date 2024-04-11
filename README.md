@@ -99,6 +99,10 @@ Here's an example of the main function setup in the code:
 // Instantiate global instances of your classes here
 // Example: Motor leftMotor(pwmPin, encoderPin, 'L');
 
+float Kp = 0.075; // Proportional gain
+float Ki = 0.01;  // Integral gain
+float Kd = 0.05;  // Derivative gain
+
 int main()
 {
     // Enable/Disable pins
