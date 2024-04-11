@@ -36,7 +36,7 @@ This codebase contains the software which controls an autonomous buggy. Within t
    - Download the [QEI.h library](https://os.mbed.com/users/aberk/code/QEI/file/5c2ad81551aa/QEI.h/) and include it in your project.
    - Download the [C12832 LCD library](https://os.mbed.com/teams/components/code/C12832/docs/tip/C12832_8h_source.html) and include it in your project.
 
-## Classes and Functions
+## Classes, Functions and variables
 
 ### Motor Class
 
