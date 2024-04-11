@@ -90,7 +90,7 @@ Handles Bluetooth communication, allowing remote interaction with the buggy.
 
 ## Basic Setup
 
-Here's an example of the main function setup in the code:
+Here's an example of the basic implementation of a line following buggy using the PID algorithm
 
 ```cpp
 #include "mbed.h"
