@@ -82,11 +82,30 @@ Contains functions to control the movements and adjustments of the buggy's motor
 
 ### Bluetooth Communication Functions
 
-Handles Bluetooth communication, allowing remote interaction with the buggy.
+Handles Bluetooth communication, allowing remote interaction with the buggy by responding to specific commands and initiating actions based on the received Bluetooth signal.
 
-| Function Name        | Description                                                  | How to Call                                        |
-|----------------------|--------------------------------------------------------------|----------------------------------------------------|
-| bluetoothCallback    | Callback function to handle Bluetooth commands.              | `hm10.attach(&bluetoothCallback);`                 |
+| Function Name        | Description                                                                         | How to Call                                        |
+|----------------------|-------------------------------------------------------------------------------------|----------------------------------------------------|
+| bluetoothCallback    | Callback function to handle and respond to Bluetooth commands. Initiates actions such as turning the buggy based on the command received. Example implementation below. | `hm10.attach(&bluetoothCallback);`                 |
+
+Example implementation of `bluetoothCallback` function:
+
+```cpp
+void bluetoothCallback()
+{
+    if (hm10.readable())
+    {
+        char command = hm10.getc(); // Read command from Bluetooth
+        switch(command)
+        {
+            case 't': // Example command to turn
+                mode = TURN;
+                break;
+            // Add more cases for other commands
+        }
+    }
+}
+
 
 ## Basic Setup
 
