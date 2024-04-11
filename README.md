@@ -63,13 +63,24 @@ Provides functionality for calculating PID values and adjusting motor control ba
 
 ### PID Control Variables
 
-Configurable parameters for PID control tuning.
+Configurable parameters for PID control tuning. By adjusting these variables, you can utilize different control algorithms, including Proportional (P), Integral (I), Derivative (D), Proportional-Integral (PI), Proportional-Derivative (PD), and Proportional-Integral-Derivative (PID) control. This flexibility allows for fine-tuning the buggy's response to various conditions and objectives.
 
-| Variable | Description                     | Example Value |
-|----------|---------------------------------|---------------|
-| `Kp`     | Proportional gain coefficient.  | `0.2`         |
-| `Ki`     | Integral gain coefficient.      | `0.01`        |
-| `Kd`     | Derivative gain coefficient.    | `0.05`        |
+| Variable | Description                             | Example Value |
+|----------|-----------------------------------------|---------------|
+| `Kp`     | Proportional gain coefficient.          | `0.2`         |
+| `Ki`     | Integral gain coefficient.              | `0.01`        |
+| `Kd`     | Derivative gain coefficient.            | `0.05`        |
+
+**Note**: To utilize different control algorithms, adjust the PID variables as follows:
+- **P Control**: Set `Ki` and `Kd` to `0`, only `Kp` affects the control.
+- **I Control**: Set `Kp` and `Kd` to `0`, only `Ki` affects the control.
+- **D Control**: Set `Kp` and `Ki` to `0`, only `Kd` affects the control.
+- **PI Control**: Set `Kd` to `0`, both `Kp` and `Ki` affect the control.
+- **PD Control**: Set `Ki` to `0`, both `Kp` and `Kd` affect the control.
+- **PID Control**: All variables `Kp`, `Ki`, and `Kd` are used.
+
+This approach allows for experimentation with various control strategies to achieve optimal performance under different conditions.
+
 
 ### Motor Control Functions
 
