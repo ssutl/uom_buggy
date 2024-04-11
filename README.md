@@ -59,6 +59,7 @@ Controls the operation of a motor using PWM output and encoder feedback.
 | getPulse        | Returns the pulse count from the encoder.                 | `int pulseCount = motorName.getPulse();` |
 | getSpeed        | Calculates and returns the motor's speed in m/s.          | `float speed = motorName.getSpeed();` |
 
+
 ### PID Control Functions
 
 Provides functionality for calculating PID values and adjusting motor control based on sensor input.
@@ -67,6 +68,7 @@ Provides functionality for calculating PID values and adjusting motor control ba
 |----------------------|--------------------------------------------------------------|----------------------------------------------------|
 | calculatePID         | Calculates the PID value based on error.                     | `float pidValue = calculatePID(error);`            |
 | calculatePositionalError | Calculates the error based on sensor readings.            | `float error = calculatePositionalError();`        |
+
 
 ### PID Control Variables
 
@@ -81,6 +83,7 @@ Configurable parameters for PID control tuning. Can also adjust `Ki` or `Kd` to 
 **Example**: To enable PD control, set `Ki = 0` and adjust `Kp` and `Kd` as needed.
 
 
+
 ### Motor Control Functions
 
 Contains functions to control the movements and adjustments of the buggy's motors.
@@ -89,6 +92,7 @@ Contains functions to control the movements and adjustments of the buggy's motor
 |----------------------|--------------------------------------------------------------|----------------------------------------------------|
 | turnBuggy            | Commands to turn the buggy.                                  | `turnBuggy();`                                     |
 | motorPIDcontrol      | Adjusts the motor speeds based on the PID output and error.  | `motorPIDcontrol(pidOutput, error);`               |
+
 
 ### Bluetooth Communication Functions
 
