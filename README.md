@@ -158,7 +158,4 @@ int main()
 
 ## Example Code
 
-For a complete example of the `main.cpp` implementation, see the [main.cpp file](src/main.cpp) in this repository.
-
-
-
+For a complete example of a `main.cpp` implementation, see the [main.cpp file](src/main.cpp) in this repository.
