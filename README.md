@@ -134,7 +134,9 @@ int main()
 }
 ```
 
+## Example Code
 
+For a complete example of the `main.cpp` implementation, see the [main.cpp file](./main.cpp) in this repository.
 
 
 
