@@ -64,7 +64,7 @@ Provides functionality for calculating PID values and adjusting motor control ba
 
 ### PID Control Variables
 
-Configurable parameters for PID control tuning. Can also adjust `Ki` or `Kd` to 0 utilise different control algorithms (P, I, D, PI, PD, PID).
+Configurable parameters for PID control tuning. Can also adjust `Ki` or `Kd` to `0` utilise different control algorithms (P, I, D, PI, PD, PID).
 
 | Variable | Description                       | Example Value |
 |----------|-----------------------------------|---------------|
