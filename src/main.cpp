@@ -1,6 +1,7 @@
 #include "mbed.h"
 #include "QEI.h"
 #include "C12832.h"
+#include <algorithm>
 // Random comment
 // Doing some changes
 // New dev changes
@@ -45,6 +46,10 @@ float P = 0;
 float I = 0;
 float D = 0;
 float PIDvalue = 0;
+
+float rightMotorSpeed = 0.5f; // Set the initial motor speed
+float leftMotorSpeed = 0.5f;  // Set the initial motor speed
+float desiredSpeed = 1.3;
 
 enum Mode
 {
@@ -110,11 +115,17 @@ public:
         return rpm;
     }
 
+    float getPulseCount()
+    {
+        return encoder.getPulses();
+    }
+
     // New method to calculate and return the motor speed
     float getSpeed()
     {
         // Wheel velocity in m/s
         wheelVelocity = (getRPM() * 2 * 3.14159 * (0.082 / 2)) / 60;
+
         return wheelVelocity;
     }
 };
@@ -182,24 +193,43 @@ void calculatePID()
     previousError = errorValue;
 }
 
+void constantMotorVelocity(Motor &leftMotor, Motor &rightMotor)
+{
+    // Get current speeds
+    float leftCurrentSpeed = std::floor(leftMotor.getSpeed() * 10) / 10;
+    float rightCurrentSpeed = std::floor(rightMotor.getSpeed() * 10) / 10;
+
+    // Proportional control parameter
+    float Kp_speed = 0.09; // Tune this parameter based on performance
+
+    // Calculate speed error
+    float leftSpeedError = desiredSpeed - leftCurrentSpeed;
+    float rightSpeedError = desiredSpeed - rightCurrentSpeed;
+
+    // Apply proportional control and ensure speed does not exceed 1.3 m/s
+    leftMotorSpeed = std::max(0.0f, std::min(1.0f, leftMotorSpeed + Kp_speed * leftSpeedError));
+    rightMotorSpeed = std::max(0.0f, std::min(1.0f, rightMotorSpeed + Kp_speed * rightSpeedError));
+}
+
 void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
 {
+    // If the buggy is on the line, move forward
     if (errorValue == 0)
     {
-        leftMotor.setDutyCycle(0.7f);
-        rightMotor.setDutyCycle(0.7f);
+        leftMotor.setDutyCycle(leftMotorSpeed);
+        rightMotor.setDutyCycle(rightMotorSpeed);
     }
     // If the buggy is on the left side of the line, turn the robot to the right
     else if (errorValue > 0)
     {
-        leftMotor.setDutyCycle(0.7f + PIDvalue);
+        leftMotor.setDutyCycle(leftMotorSpeed + PIDvalue);
     }
 
     // If the buggy is on the right side of the line, turn the robot to the left
     else if (errorValue < 0)
     {
         // leftMotor.setDutyCycle(0.7f - error * Kp);
-        rightMotor.setDutyCycle(0.7f - PIDvalue);
+        rightMotor.setDutyCycle(rightMotorSpeed - PIDvalue);
     }
 }
 
@@ -245,7 +275,9 @@ int main()
             rightMotor.stop();
             break;
         case FOLLOW_LINE:
+            // Need a function to increase
             calculatePID();
+            constantMotorVelocity(leftMotor, rightMotor);
             motorPIDcontrol(leftMotor, rightMotor);
             break;
         case TURN:
@@ -253,15 +285,8 @@ int main()
             break;
         }
 
-        // Print sensor values on LCD
-        lcd.cls();
+        lcd.cls(); // Clear the screen before writing new data
         lcd.locate(0, 0);
-        // Print error value
         lcd.printf("Error: %d", errorValue);
-        // print the current mode below actual name
-        lcd.locate(0, 10);
-        lcd.printf("Mode: %d", mode);
-
-        wait(0.1);
     }
 }
