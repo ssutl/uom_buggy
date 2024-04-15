@@ -34,22 +34,12 @@ DigitalIn LineFollowSensor4(PB_1);
 DigitalIn LineFollowSensor5(PC_5);
 int LFSensor[5] = {0, 0, 0, 0, 0};
 
-float Kp = 0.075; // Proportional gain (should be between 0 and 0.075)
-float Ki = 0.01;  // Integral gain
-float Kd = 0.05;  // Derivative gain
+float Kp = 0.16; // Proportional gain (should be between 0 and 0.075)
 int errorValue = 0;
-
-float previousError = 0;
-float integral = 0;
-float derivative = 0;
 float P = 0;
-float I = 0;
-float D = 0;
 float PIDvalue = 0;
 
-float rightMotorSpeed = 0.5f; // Set the initial motor speed
-float leftMotorSpeed = 0.5f;  // Set the initial motor speed
-float desiredSpeed = 1.3;
+float desiredSpeed = 1;
 
 enum Mode
 {
@@ -144,31 +134,19 @@ void calculatePositionalError()
     LFSensor[4] = !LineFollowSensor5.read();
 
     if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 1))
-        errorValue = 4;
-
-    else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 1) && (LFSensor[4] == 1))
-        errorValue = 3;
-
-    else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 1) && (LFSensor[4] == 0))
         errorValue = 2;
 
-    else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 1) && (LFSensor[3] == 1) && (LFSensor[4] == 0))
+    else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 1) && (LFSensor[4] == 0))
         errorValue = 1;
 
     else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 1) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
         errorValue = 0;
 
-    else if ((LFSensor[0] == 0) && (LFSensor[1] == 1) && (LFSensor[2] == 1) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
+    else if ((LFSensor[0] == 0) && (LFSensor[1] == 1) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
         errorValue = -1;
 
-    else if ((LFSensor[0] == 0) && (LFSensor[1] == 1) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
-        errorValue = -2;
-
-    else if ((LFSensor[0] == 1) && (LFSensor[1] == 1) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
-        errorValue = -3;
-
     else if ((LFSensor[0] == 1) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
-        errorValue = -4;
+        errorValue = -2;
 }
 
 void bluetoothCallback()
@@ -183,36 +161,31 @@ void bluetoothCallback()
     }
 }
 
-// PID calculation
-void calculatePID()
+void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
 {
-    P = errorValue;
-    I = I + errorValue;
-    D = errorValue - previousError;
-    PIDvalue = Kp * P + Ki * I + Kd * D;
-    previousError = errorValue;
-}
 
-void constantMotorVelocity(Motor &leftMotor, Motor &rightMotor)
-{
+    calculatePositionalError();
+    P = errorValue;
+    PIDvalue = Kp * P;
     // Get current speeds
-    float leftCurrentSpeed = std::floor(leftMotor.getSpeed() * 10) / 10;
-    float rightCurrentSpeed = std::floor(rightMotor.getSpeed() * 10) / 10;
+    float leftCurrentSpeed = leftMotor.getSpeed();
+    float rightCurrentSpeed = rightMotor.getSpeed();
 
     // Proportional control parameter
-    float Kp_speed = 0.09; // Tune this parameter based on performance
+    float Kp_speed = 0.15; // Tune this parameter based on performance
+
+    // motor speed
+    float leftMotorSpeed = 0.5f;  // Set the initial motor speed
+    float rightMotorSpeed = 0.5f; // Set the initial motor speed
 
     // Calculate speed error
     float leftSpeedError = desiredSpeed - leftCurrentSpeed;
     float rightSpeedError = desiredSpeed - rightCurrentSpeed;
 
     // Apply proportional control and ensure speed does not exceed 1.3 m/s
-    leftMotorSpeed = std::max(0.0f, std::min(1.0f, leftMotorSpeed + Kp_speed * leftSpeedError));
-    rightMotorSpeed = std::max(0.0f, std::min(1.0f, rightMotorSpeed + Kp_speed * rightSpeedError));
-}
+    leftMotorSpeed = leftMotorSpeed + Kp_speed * leftSpeedError;
+    rightMotorSpeed = rightMotorSpeed + Kp_speed * rightSpeedError;
 
-void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
-{
     // If the buggy is on the line, move forward
     if (errorValue == 0)
     {
@@ -276,8 +249,6 @@ int main()
             break;
         case FOLLOW_LINE:
             // Need a function to increase
-            calculatePID();
-            constantMotorVelocity(leftMotor, rightMotor);
             motorPIDcontrol(leftMotor, rightMotor);
             break;
         case TURN:
@@ -288,5 +259,6 @@ int main()
         lcd.cls(); // Clear the screen before writing new data
         lcd.locate(0, 0);
         lcd.printf("Error: %d", errorValue);
+        wait(0.05);
     }
 }
