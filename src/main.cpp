@@ -34,12 +34,14 @@ DigitalIn LineFollowSensor4(PB_1);
 DigitalIn LineFollowSensor5(PC_5);
 int LFSensor[5] = {0, 0, 0, 0, 0};
 
-float Kp = 0.16; // Proportional gain (should be between 0 and 0.075)
+float Kp = 0.068; // Proportional gain (should be between 0 and 0.075)
+float Kd = 0.385; // Differential gain (should be between 0 and 0.1)
 int errorValue = 0;
+float lastError = 0;
 float P = 0;
 float PIDvalue = 0;
 
-float desiredSpeed = 1;
+float desiredSpeed = 0.40;
 
 enum Mode
 {
@@ -105,6 +107,11 @@ public:
         return rpm;
     }
 
+    float getCurrentDutyCycle() const
+    {
+        return dutyCycle;
+    }
+
     float getPulseCount()
     {
         return encoder.getPulses();
@@ -134,7 +141,7 @@ void calculatePositionalError()
     LFSensor[4] = !LineFollowSensor5.read();
 
     if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 1))
-        errorValue = 2;
+        errorValue = 1.5;
 
     else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 1) && (LFSensor[4] == 0))
         errorValue = 1;
@@ -146,7 +153,7 @@ void calculatePositionalError()
         errorValue = -1;
 
     else if ((LFSensor[0] == 1) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
-        errorValue = -2;
+        errorValue = -1.5;
 }
 
 void bluetoothCallback()
@@ -163,47 +170,44 @@ void bluetoothCallback()
 
 void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
 {
-
     calculatePositionalError();
-    P = errorValue;
-    PIDvalue = Kp * P;
-    // Get current speeds
+    float error = errorValue;                    // Current error
+    float differentialError = error - lastError; // Calculate differential error
+
+    // PID control signal calculation with PD components
+    float PIDvalue = Kp * error + Kd * differentialError;
+
+    // Update last error for the next cycle
+    lastError = error;
+
+    // Get current speeds and current duty cycles
     float leftCurrentSpeed = leftMotor.getSpeed();
     float rightCurrentSpeed = rightMotor.getSpeed();
+    float leftMotorDutyCycle = leftMotor.getCurrentDutyCycle();
+    float rightMotorDutyCycle = rightMotor.getCurrentDutyCycle();
 
-    // Proportional control parameter
+    // Proportional speed control parameter
     float Kp_speed = 0.15; // Tune this parameter based on performance
-
-    // motor speed
-    float leftMotorSpeed = 0.5f;  // Set the initial motor speed
-    float rightMotorSpeed = 0.5f; // Set the initial motor speed
 
     // Calculate speed error
     float leftSpeedError = desiredSpeed - leftCurrentSpeed;
     float rightSpeedError = desiredSpeed - rightCurrentSpeed;
 
-    // Apply proportional control and ensure speed does not exceed 1.3 m/s
-    leftMotorSpeed = leftMotorSpeed + Kp_speed * leftSpeedError;
-    rightMotorSpeed = rightMotorSpeed + Kp_speed * rightSpeedError;
+    // Adjust motor duty cycles based on speed error and line position error
+    leftMotorDutyCycle += Kp_speed * leftSpeedError;
+    rightMotorDutyCycle += Kp_speed * rightSpeedError;
 
-    // If the buggy is on the line, move forward
-    if (errorValue == 0)
-    {
-        leftMotor.setDutyCycle(leftMotorSpeed);
-        rightMotor.setDutyCycle(rightMotorSpeed);
-    }
-    // If the buggy is on the left side of the line, turn the robot to the right
-    else if (errorValue > 0)
-    {
-        leftMotor.setDutyCycle(leftMotorSpeed + PIDvalue);
-    }
+    // Correct duty cycles based on PID error from line detection
+    leftMotorDutyCycle += (errorValue > 0 ? PIDvalue : 0);
+    rightMotorDutyCycle -= (errorValue < 0 ? PIDvalue : 0);
 
-    // If the buggy is on the right side of the line, turn the robot to the left
-    else if (errorValue < 0)
-    {
-        // leftMotor.setDutyCycle(0.7f - error * Kp);
-        rightMotor.setDutyCycle(rightMotorSpeed - PIDvalue);
-    }
+    // Clamp the duty cycles to ensure they stay within valid range
+    leftMotorDutyCycle = std::max(0.0f, std::min(1.0f, leftMotorDutyCycle));
+    rightMotorDutyCycle = std::max(0.0f, std::min(1.0f, rightMotorDutyCycle));
+
+    // Set the updated duty cycles
+    leftMotor.setDutyCycle(leftMotorDutyCycle);
+    rightMotor.setDutyCycle(rightMotorDutyCycle);
 }
 
 void turnBuggy(Motor &leftMotor, Motor &rightMotor)
@@ -259,6 +263,5 @@ int main()
         lcd.cls(); // Clear the screen before writing new data
         lcd.locate(0, 0);
         lcd.printf("Error: %d", errorValue);
-        wait(0.05);
     }
 }
