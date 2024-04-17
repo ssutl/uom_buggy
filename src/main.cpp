@@ -34,12 +34,15 @@ DigitalIn LineFollowSensor4(PB_1);
 DigitalIn LineFollowSensor5(PC_5);
 int LFSensor[5] = {0, 0, 0, 0, 0};
 
-float Kp = 0.068; // Proportional gain (should be between 0 and 0.075)
-float Kd = 0.385; // Differential gain (should be between 0 and 0.1)
+float Kp = 0.0685; // Proportional gain (should be between 0 and 0.075)
+float Kd = 0.385;  // Differential gain (should be between 0 and 0.1)
 int errorValue = 0;
 float lastError = 0;
 float P = 0;
+float I = 0;
+float D = 0;
 float PIDvalue = 0;
+float integral = 0; // Variable to store the integral of the error
 
 float desiredSpeed = 0.40;
 
@@ -141,7 +144,7 @@ void calculatePositionalError()
     LFSensor[4] = !LineFollowSensor5.read();
 
     if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 1))
-        errorValue = 1.5;
+        errorValue = 1.45;
 
     else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 1) && (LFSensor[4] == 0))
         errorValue = 1;
@@ -174,8 +177,15 @@ void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
     float error = errorValue;                    // Current error
     float differentialError = error - lastError; // Calculate differential error
 
-    // PID control signal calculation with PD components
-    float PIDvalue = Kp * error + Kd * differentialError;
+    integral += errorValue; // Accumulate the error over time
+
+    // Calculate P, I, D terms separately for clarity
+    P = Kp * errorValue;
+    I = Ki * integral;
+    D = Kd * differentialError;
+
+    // Calculate total PID control value
+    PIDvalue = P + I + D;
 
     // Update last error for the next cycle
     lastError = error;
