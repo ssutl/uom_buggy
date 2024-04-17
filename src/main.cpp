@@ -39,12 +39,14 @@ float Kd = 0.385;  // Differential gain (should be between 0 and 0.1)
 int errorValue = 0;
 float lastError = 0;
 float P = 0;
-float I = 0;
 float D = 0;
 float PIDvalue = 0;
-float integral = 0; // Variable to store the integral of the error
 
 float desiredSpeed = 0.40;
+
+bool noLineDetected = false; // Global flag
+int noLineCount = 0;         // Counter for no line detected cycles
+int noLineThreshold = 5;     // Number of cycles to confirm no line truly
 
 enum Mode
 {
@@ -143,20 +145,36 @@ void calculatePositionalError()
     LFSensor[3] = !LineFollowSensor4.read();
     LFSensor[4] = !LineFollowSensor5.read();
 
-    if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 1))
-        errorValue = 1.45;
+    if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
+    {
+        noLineDetected = true;
+        noLineCount++;
+        if (noLineCount >= noLineThreshold)
+        {
+            mode = STOPPED;
+        }
+    }
+    else
+    {
+        noLineDetected = false;
+        noLineCount = 0;
+        mode = FOLLOW_LINE;
 
-    else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 1) && (LFSensor[4] == 0))
-        errorValue = 1;
+        if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 1))
+            errorValue = 1.45;
 
-    else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 1) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
-        errorValue = 0;
+        else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 1) && (LFSensor[4] == 0))
+            errorValue = 1;
 
-    else if ((LFSensor[0] == 0) && (LFSensor[1] == 1) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
-        errorValue = -1;
+        else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 1) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
+            errorValue = 0;
 
-    else if ((LFSensor[0] == 1) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
-        errorValue = -1.5;
+        else if ((LFSensor[0] == 0) && (LFSensor[1] == 1) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
+            errorValue = -1;
+
+        else if ((LFSensor[0] == 1) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
+            errorValue = -1.45;
+    }
 }
 
 void bluetoothCallback()
@@ -164,7 +182,7 @@ void bluetoothCallback()
     if (hm10.readable())
     {
         char command = hm10.getc(); // Read command from Bluetooth
-        if (command == 't')
+        if (command == 'T')
         {
             mode = TURN;
         }
@@ -181,11 +199,10 @@ void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
 
     // Calculate P, I, D terms separately for clarity
     P = Kp * errorValue;
-    I = Ki * integral;
     D = Kd * differentialError;
 
     // Calculate total PID control value
-    PIDvalue = P + I + D;
+    PIDvalue = P + D;
 
     // Update last error for the next cycle
     lastError = error;
