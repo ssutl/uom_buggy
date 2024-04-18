@@ -34,8 +34,8 @@ DigitalIn LineFollowSensor4(PB_1);
 DigitalIn LineFollowSensor5(PC_5);
 int LFSensor[5] = {0, 0, 0, 0, 0};
 
-float Kp = 0.0685; // Proportional gain (should be between 0 and 0.075)
-float Kd = 0.385;  // Differential gain (should be between 0 and 0.1)
+float Kp = 0.0305; // Proportional gain (should be between 0 and 0.075)
+float Kd = 0.040;  // Differential gain (should be between 0 and 0.1)
 int errorValue = 0;
 float lastError = 0;
 float P = 0;
@@ -46,7 +46,9 @@ float desiredSpeed = 0.40;
 
 bool noLineDetected = false; // Global flag
 int noLineCount = 0;         // Counter for no line detected cycles
-int noLineThreshold = 5;     // Number of cycles to confirm no line truly
+int noLineThreshold = 50;    // Number of cycles to confirm no line truly
+
+bool isTurning = false; // Flag to check if turning is in progress
 
 enum Mode
 {
@@ -161,7 +163,7 @@ void calculatePositionalError()
         mode = FOLLOW_LINE;
 
         if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 1))
-            errorValue = 1.45;
+            errorValue = 1.5;
 
         else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 1) && (LFSensor[4] == 0))
             errorValue = 1;
@@ -173,7 +175,7 @@ void calculatePositionalError()
             errorValue = -1;
 
         else if ((LFSensor[0] == 1) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
-            errorValue = -1.45;
+            errorValue = -1.5;
     }
 }
 
@@ -182,9 +184,10 @@ void bluetoothCallback()
     if (hm10.readable())
     {
         char command = hm10.getc(); // Read command from Bluetooth
-        if (command == 'T')
-        {
+        if (command == 'T' && !isTurning)
+        { // Check if it's already turning
             mode = TURN;
+            isTurning = true; // Lock the mode to turning
         }
     }
 }
@@ -194,8 +197,6 @@ void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
     calculatePositionalError();
     float error = errorValue;                    // Current error
     float differentialError = error - lastError; // Calculate differential error
-
-    integral += errorValue; // Accumulate the error over time
 
     // Calculate P, I, D terms separately for clarity
     P = Kp * errorValue;
@@ -225,12 +226,10 @@ void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
     rightMotorDutyCycle += Kp_speed * rightSpeedError;
 
     // Correct duty cycles based on PID error from line detection
-    leftMotorDutyCycle += (errorValue > 0 ? PIDvalue : 0);
-    rightMotorDutyCycle -= (errorValue < 0 ? PIDvalue : 0);
 
     // Clamp the duty cycles to ensure they stay within valid range
-    leftMotorDutyCycle = std::max(0.0f, std::min(1.0f, leftMotorDutyCycle));
-    rightMotorDutyCycle = std::max(0.0f, std::min(1.0f, rightMotorDutyCycle));
+    leftMotorDutyCycle = std::max(0.0f, std::min(1.0f, leftMotorDutyCycle + PIDvalue));
+    rightMotorDutyCycle = std::max(0.0f, std::min(1.0f, rightMotorDutyCycle - PIDvalue));
 
     // Set the updated duty cycles
     leftMotor.setDutyCycle(leftMotorDutyCycle);
@@ -239,13 +238,20 @@ void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
 
 void turnBuggy(Motor &leftMotor, Motor &rightMotor)
 {
-    leftMotor.setDutyCycle(0.3f);
-    rightMotor.setDutyCycle(0.7f);
-    wait(1.2);                    // Adjust time as necessary for the turn
+    leftMotor.setDutyCycle(0.5f); // Stop the motors before turning
+    rightMotor.setDutyCycle(0.5f);
+    wait(1.0);
+
+    leftMotor.setDutyCycle(0.3f);  // Set left motor duty cycle for turning
+    rightMotor.setDutyCycle(0.7f); // Set right motor duty cycle for turning
+    wait(1.2);                     // Wait for turn to complete
+
     leftMotor.setDutyCycle(0.5f); // Stop turning by setting motors to neutral
     rightMotor.setDutyCycle(0.5f);
-    wait(1.0);          // Adjust waiting time as necessary
-    mode = FOLLOW_LINE; // Change mode back to FOLLOW_LINE after the turn is complete
+    wait(1.0); // Ensure motors are stabilized
+
+    isTurning = false;  // Reset turning flag
+    mode = FOLLOW_LINE; // Automatically return to follow line after turn
 }
 
 int main()
@@ -262,7 +268,8 @@ int main()
     LineFollowSensorSwitch4.write(1);
     LineFollowSensorSwitch5.write(1);
 
-    hm10.baud(9600); // Set the baud rate to 9600
+    hm10.baud(9600);                 // Set the baud rate to 9600
+    hm10.attach(&bluetoothCallback); // Attach the callback function
 
     // Create Motor instances for left and right motors
     Motor leftMotor(pwm1, leftEncoder, 'L');
@@ -270,7 +277,11 @@ int main()
 
     while (true)
     {
-        calculatePositionalError();
+
+        if (!isTurning)
+        { // Only calculate errors and PID if not currently turning
+            calculatePositionalError();
+        }
 
         switch (mode)
         {
@@ -283,7 +294,10 @@ int main()
             motorPIDcontrol(leftMotor, rightMotor);
             break;
         case TURN:
-            turnBuggy(leftMotor, rightMotor);
+            if (isTurning)
+            { // Ensure we only turn when we are supposed to
+                turnBuggy(leftMotor, rightMotor);
+            }
             break;
         }
 
