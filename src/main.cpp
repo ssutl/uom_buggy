@@ -27,11 +27,11 @@ DigitalOut LineFollowSensorSwitch4(PD_2);
 DigitalOut LineFollowSensorSwitch5(PC_9);
 
 // Line sensor1 being the leftmost sensor
-DigitalIn LineFollowSensor1(PC_3);
-DigitalIn LineFollowSensor2(PC_2);
-DigitalIn LineFollowSensor3(PC_4);
-DigitalIn LineFollowSensor4(PB_1);
-DigitalIn LineFollowSensor5(PC_5);
+AnalogIn LineFollowSensor1(PC_3);
+AnalogIn LineFollowSensor2(PC_2);
+AnalogIn LineFollowSensor3(PC_4);
+AnalogIn LineFollowSensor4(PB_1);
+AnalogIn LineFollowSensor5(PC_5);
 int LFSensor[5] = {0, 0, 0, 0, 0};
 
 float Kp = 0.0305; // Proportional gain (should be between 0 and 0.075)
@@ -278,31 +278,41 @@ int main()
     while (true)
     {
 
-        if (!isTurning)
-        { // Only calculate errors and PID if not currently turning
-            calculatePositionalError();
-        }
+        // if (!isTurning)
+        // { // Only calculate errors and PID if not currently turning
+        //     calculatePositionalError();
+        // }
 
-        switch (mode)
-        {
-        case STOPPED:
-            leftMotor.stop();
-            rightMotor.stop();
-            break;
-        case FOLLOW_LINE:
-            // Need a function to increase
-            motorPIDcontrol(leftMotor, rightMotor);
-            break;
-        case TURN:
-            if (isTurning)
-            { // Ensure we only turn when we are supposed to
-                turnBuggy(leftMotor, rightMotor);
-            }
-            break;
-        }
+        // switch (mode)
+        // {
+        // case STOPPED:
+        //     leftMotor.stop();
+        //     rightMotor.stop();
+        //     break;
+        // case FOLLOW_LINE:
+        //     // Need a function to increase
+        //     // motorPIDcontrol(leftMotor, rightMotor);
+        //     break;
+        // case TURN:
+        //     if (isTurning)
+        //     { // Ensure we only turn when we are supposed to
+        //         turnBuggy(leftMotor, rightMotor);
+        //     }
+        //     break;
+        // }
 
-        lcd.cls(); // Clear the screen before writing new data
+        // print the sensor values
+        lcd.cls();
         lcd.locate(0, 0);
-        lcd.printf("Error: %d", errorValue);
+        lcd.printf("LFS1: %d", LFSensor[0]);
+        lcd.locate(20, 0);
+        lcd.printf("LFS2: %d", LFSensor[1]);
+        lcd.locate(0, 10);
+        lcd.printf("LFS3: %d", LFSensor[2]);
+        lcd.locate(20, 10);
+        lcd.printf("LFS4: %d", LFSensor[3]);
+        lcd.locate(0, 20);
+        lcd.printf("LFS5: %d", LFSensor[4]);
+        wait(0.1);
     }
 }
