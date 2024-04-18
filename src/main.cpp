@@ -32,11 +32,10 @@ AnalogIn LineFollowSensor2(PC_2);
 AnalogIn LineFollowSensor3(PC_4);
 AnalogIn LineFollowSensor4(PB_1);
 AnalogIn LineFollowSensor5(PC_5);
-int LFSensor[5] = {0, 0, 0, 0, 0};
 
-float Kp = 0.0305; // Proportional gain (should be between 0 and 0.075)
-float Kd = 0.040;  // Differential gain (should be between 0 and 0.1)
-int errorValue = 0;
+float Kp = 0.18; // Proportional gain (should be between 0 and 0.075)
+float Kd = 0.0;  // Differential gain (should be between 0 and 0.1)
+float errorValue = 0;
 float lastError = 0;
 float P = 0;
 float D = 0;
@@ -46,7 +45,7 @@ float desiredSpeed = 0.40;
 
 bool noLineDetected = false; // Global flag
 int noLineCount = 0;         // Counter for no line detected cycles
-int noLineThreshold = 50;    // Number of cycles to confirm no line truly
+int noLineThreshold = 10;    // Number of cycles to confirm no line truly
 
 bool isTurning = false; // Flag to check if turning is in progress
 
@@ -57,7 +56,7 @@ enum Mode
     TURN
 };
 
-Mode mode = FOLLOW_LINE; // Declare mode as a global variable
+Mode mode = STOPPED; // Declare mode as a global variable
 
 Timer t;
 
@@ -138,16 +137,11 @@ public:
 // If buggy is to the left the error will be positive else if the buggy is to the right the error will be negative
 void calculatePositionalError()
 {
-    // If the reading is 0 the sensor is detecting the line
-    // Need to invert the readings
+    // Read analog values from sensors
 
-    LFSensor[0] = !LineFollowSensor1.read();
-    LFSensor[1] = !LineFollowSensor2.read();
-    LFSensor[2] = !LineFollowSensor3.read();
-    LFSensor[3] = !LineFollowSensor4.read();
-    LFSensor[4] = !LineFollowSensor5.read();
-
-    if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
+    // Check if no line is detected then we set mode to STOPPED, else if line is detected we set mode to FOLLOW_LINE
+    // if all are above 0.95 then no line detected
+    if (LineFollowSensor1.read() > 0.85 && LineFollowSensor2.read() > 0.85 && LineFollowSensor3 > 0.85 && LineFollowSensor4.read() > 0.85 && LineFollowSensor5.read() > 0.85)
     {
         noLineDetected = true;
         noLineCount++;
@@ -158,24 +152,15 @@ void calculatePositionalError()
     }
     else
     {
-        noLineDetected = false;
-        noLineCount = 0;
         mode = FOLLOW_LINE;
 
-        if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 1))
-            errorValue = 1.5;
+        // Using the sensor values directly as float for error calculation
+        errorValue = (LineFollowSensor1.read() * -2 + LineFollowSensor2.read() * -1 + LineFollowSensor3 * 0 + LineFollowSensor4.read() * 1 + LineFollowSensor5.read() * 2);
 
-        else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 1) && (LFSensor[4] == 0))
-            errorValue = 1;
+        float sumSensorValues = LineFollowSensor1.read() + LineFollowSensor2.read() + LineFollowSensor3.read() + LineFollowSensor4.read() + LineFollowSensor5.read();
 
-        else if ((LFSensor[0] == 0) && (LFSensor[1] == 0) && (LFSensor[2] == 1) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
-            errorValue = 0;
-
-        else if ((LFSensor[0] == 0) && (LFSensor[1] == 1) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
-            errorValue = -1;
-
-        else if ((LFSensor[0] == 1) && (LFSensor[1] == 0) && (LFSensor[2] == 0) && (LFSensor[3] == 0) && (LFSensor[4] == 0))
-            errorValue = -1.5;
+        // Normalize the error value based on the sum of sensor values
+        errorValue = errorValue / sumSensorValues;
     }
 }
 
@@ -228,8 +213,8 @@ void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
     // Correct duty cycles based on PID error from line detection
 
     // Clamp the duty cycles to ensure they stay within valid range
-    leftMotorDutyCycle = std::max(0.0f, std::min(1.0f, leftMotorDutyCycle + PIDvalue));
-    rightMotorDutyCycle = std::max(0.0f, std::min(1.0f, rightMotorDutyCycle - PIDvalue));
+    leftMotorDutyCycle = std::max(0.0f, std::min(1.0f, leftMotorDutyCycle - PIDvalue));
+    rightMotorDutyCycle = std::max(0.0f, std::min(1.0f, rightMotorDutyCycle + PIDvalue));
 
     // Set the updated duty cycles
     leftMotor.setDutyCycle(leftMotorDutyCycle);
@@ -277,42 +262,32 @@ int main()
 
     while (true)
     {
+        if (!isTurning)
+        {
+            calculatePositionalError();
+        }
 
-        // if (!isTurning)
-        // { // Only calculate errors and PID if not currently turning
-        //     calculatePositionalError();
-        // }
+        switch (mode)
+        {
+        case STOPPED:
+            leftMotor.stop();
+            rightMotor.stop();
+            break;
+        case FOLLOW_LINE:
+            // Need a function to increase
+            motorPIDcontrol(leftMotor, rightMotor);
+            break;
+        case TURN:
+            if (isTurning)
+            { // Ensure we only turn when we are supposed to
+                turnBuggy(leftMotor, rightMotor);
+            }
+            break;
+        }
 
-        // switch (mode)
-        // {
-        // case STOPPED:
-        //     leftMotor.stop();
-        //     rightMotor.stop();
-        //     break;
-        // case FOLLOW_LINE:
-        //     // Need a function to increase
-        //     // motorPIDcontrol(leftMotor, rightMotor);
-        //     break;
-        // case TURN:
-        //     if (isTurning)
-        //     { // Ensure we only turn when we are supposed to
-        //         turnBuggy(leftMotor, rightMotor);
-        //     }
-        //     break;
-        // }
-
-        // print the sensor values
+        // print error
         lcd.cls();
         lcd.locate(0, 0);
-        lcd.printf("LFS1: %d", LFSensor[0]);
-        lcd.locate(20, 0);
-        lcd.printf("LFS2: %d", LFSensor[1]);
-        lcd.locate(0, 10);
-        lcd.printf("LFS3: %d", LFSensor[2]);
-        lcd.locate(20, 10);
-        lcd.printf("LFS4: %d", LFSensor[3]);
-        lcd.locate(0, 20);
-        lcd.printf("LFS5: %d", LFSensor[4]);
-        wait(0.1);
+        lcd.printf("Error: %.2f", 0.175 * errorValue);
     }
 }
