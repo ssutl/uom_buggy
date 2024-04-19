@@ -33,8 +33,8 @@ AnalogIn LineFollowSensor3(PC_4);
 AnalogIn LineFollowSensor4(PB_1);
 AnalogIn LineFollowSensor5(PC_5);
 
-float Kp = 0.12;   // Proportional gain (should be between 0 and 0.075)
-float Kd = 0.0128; // Differential gain (should be between 0 and 0.1)
+float Kp = 0.12;  // Proportional gain (should be between 0 and 0.075)
+float Kd = 0.013; // Differential gain (should be between 0 and 0.1)
 float errorValue = 0;
 float lastError = 0;
 float P = 0;
@@ -156,7 +156,7 @@ void calculatePositionalError()
         mode = FOLLOW_LINE;
 
         // Using the sensor values directly as float for error calculation
-        errorValue = (LineFollowSensor1.read() * -1.37 + LineFollowSensor2.read() * -1.13 + LineFollowSensor3.read() * 0 + LineFollowSensor4.read() * 1.13 + LineFollowSensor5.read() * 1.37);
+        errorValue = (LineFollowSensor1.read() * -1.329 + LineFollowSensor2.read() * -1.115 + LineFollowSensor3.read() * 0 + LineFollowSensor4.read() * 1.115 + LineFollowSensor5.read() * 1.329);
 
         float sumSensorValues = LineFollowSensor1.read() + LineFollowSensor2.read() + LineFollowSensor3.read() + LineFollowSensor4.read() + LineFollowSensor5.read();
 
@@ -230,7 +230,7 @@ void turnBuggy(Motor &leftMotor, Motor &rightMotor)
 
     leftMotor.setDutyCycle(0.3f);  // Set left motor duty cycle for turning
     rightMotor.setDutyCycle(0.7f); // Set right motor duty cycle for turning
-    wait(0.8);                     // Wait for turn to complete
+    wait(0.75);                    // Wait for turn to complete
 
     leftMotor.setDutyCycle(0.5f); // Stop turning by setting motors to neutral
     rightMotor.setDutyCycle(0.5f);
