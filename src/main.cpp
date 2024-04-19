@@ -34,7 +34,7 @@ AnalogIn LineFollowSensor4(PB_1);
 AnalogIn LineFollowSensor5(PC_5);
 
 float Kp = 0.12;   // Proportional gain (should be between 0 and 0.075)
-float Kd = 0.0129; // Differential gain (should be between 0 and 0.1)
+float Kd = 0.0128; // Differential gain (should be between 0 and 0.1)
 float errorValue = 0;
 float lastError = 0;
 float P = 0;
@@ -45,7 +45,7 @@ float desiredSpeed = 0.375;
 
 bool noLineDetected = false; // Global flag
 int noLineCount = 0;         // Counter for no line detected cycles
-int noLineThreshold = 30;    // Number of cycles to confirm no line truly
+int noLineThreshold = 20;    // Number of cycles to confirm no line truly
 
 bool isTurning = false; // Flag to check if turning is in progress
 
