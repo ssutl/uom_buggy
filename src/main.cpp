@@ -33,19 +33,19 @@ AnalogIn LineFollowSensor3(PC_4);
 AnalogIn LineFollowSensor4(PB_1);
 AnalogIn LineFollowSensor5(PC_5);
 
-float Kp = 0.18; // Proportional gain (should be between 0 and 0.075)
-float Kd = 0.0;  // Differential gain (should be between 0 and 0.1)
+float Kp = 0.12;  // Proportional gain (should be between 0 and 0.075)
+float Kd = 0.013; // Differential gain (should be between 0 and 0.1)
 float errorValue = 0;
 float lastError = 0;
 float P = 0;
 float D = 0;
 float PIDvalue = 0;
 
-float desiredSpeed = 0.40;
+float desiredSpeed = 0.42;
 
 bool noLineDetected = false; // Global flag
 int noLineCount = 0;         // Counter for no line detected cycles
-int noLineThreshold = 10;    // Number of cycles to confirm no line truly
+int noLineThreshold = 100;   // Number of cycles to confirm no line truly
 
 bool isTurning = false; // Flag to check if turning is in progress
 
@@ -141,27 +141,15 @@ void calculatePositionalError()
 
     // Check if no line is detected then we set mode to STOPPED, else if line is detected we set mode to FOLLOW_LINE
     // if all are above 0.95 then no line detected
-    if (LineFollowSensor1.read() > 0.85 && LineFollowSensor2.read() > 0.85 && LineFollowSensor3 > 0.85 && LineFollowSensor4.read() > 0.85 && LineFollowSensor5.read() > 0.85)
-    {
-        noLineDetected = true;
-        noLineCount++;
-        if (noLineCount >= noLineThreshold)
-        {
-            mode = STOPPED;
-        }
-    }
-    else
-    {
-        mode = FOLLOW_LINE;
+    mode = FOLLOW_LINE;
 
-        // Using the sensor values directly as float for error calculation
-        errorValue = (LineFollowSensor1.read() * -2 + LineFollowSensor2.read() * -1 + LineFollowSensor3 * 0 + LineFollowSensor4.read() * 1 + LineFollowSensor5.read() * 2);
+    // Using the sensor values directly as float for error calculation
+    errorValue = (LineFollowSensor1.read() * -1.40 + LineFollowSensor2.read() * -1.15 + LineFollowSensor3.read() * 0 + LineFollowSensor4.read() * 1.15 + LineFollowSensor5.read() * 1.40);
 
-        float sumSensorValues = LineFollowSensor1.read() + LineFollowSensor2.read() + LineFollowSensor3.read() + LineFollowSensor4.read() + LineFollowSensor5.read();
+    float sumSensorValues = LineFollowSensor1.read() + LineFollowSensor2.read() + LineFollowSensor3.read() + LineFollowSensor4.read() + LineFollowSensor5.read();
 
-        // Normalize the error value based on the sum of sensor values
-        errorValue = errorValue / sumSensorValues;
-    }
+    // Normalize the error value based on the sum of sensor values
+    errorValue = errorValue / sumSensorValues;
 }
 
 void bluetoothCallback()
