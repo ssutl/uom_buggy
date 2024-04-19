@@ -41,7 +41,7 @@ float P = 0;
 float D = 0;
 float PIDvalue = 0;
 
-float desiredSpeed = 0.42;
+float desiredSpeed = 0.375;
 
 bool noLineDetected = false; // Global flag
 int noLineCount = 0;         // Counter for no line detected cycles
@@ -144,7 +144,7 @@ void calculatePositionalError()
     mode = FOLLOW_LINE;
 
     // Using the sensor values directly as float for error calculation
-    errorValue = (LineFollowSensor1.read() * -1.40 + LineFollowSensor2.read() * -1.15 + LineFollowSensor3.read() * 0 + LineFollowSensor4.read() * 1.15 + LineFollowSensor5.read() * 1.40);
+    errorValue = (LineFollowSensor1.read() * -1.40 + LineFollowSensor2.read() * -1.1 + LineFollowSensor3.read() * 0 + LineFollowSensor4.read() * 1.1 + LineFollowSensor5.read() * 1.40);
 
     float sumSensorValues = LineFollowSensor1.read() + LineFollowSensor2.read() + LineFollowSensor3.read() + LineFollowSensor4.read() + LineFollowSensor5.read();
 
