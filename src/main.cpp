@@ -33,8 +33,8 @@ AnalogIn LineFollowSensor3(PC_4);
 AnalogIn LineFollowSensor4(PB_1);
 AnalogIn LineFollowSensor5(PC_5);
 
-float Kp = 0.12;  // Proportional gain (should be between 0 and 0.075)
-float Kd = 0.013; // Differential gain (should be between 0 and 0.1)
+float Kp = 0.12;   // Proportional gain (should be between 0 and 0.075)
+float Kd = 0.0129; // Differential gain (should be between 0 and 0.1)
 float errorValue = 0;
 float lastError = 0;
 float P = 0;
@@ -45,7 +45,7 @@ float desiredSpeed = 0.375;
 
 bool noLineDetected = false; // Global flag
 int noLineCount = 0;         // Counter for no line detected cycles
-int noLineThreshold = 100;   // Number of cycles to confirm no line truly
+int noLineThreshold = 30;    // Number of cycles to confirm no line truly
 
 bool isTurning = false; // Flag to check if turning is in progress
 
@@ -141,15 +141,28 @@ void calculatePositionalError()
 
     // Check if no line is detected then we set mode to STOPPED, else if line is detected we set mode to FOLLOW_LINE
     // if all are above 0.95 then no line detected
-    mode = FOLLOW_LINE;
+    if (LineFollowSensor1.read() > 0.85 && LineFollowSensor2.read() > 0.85 && LineFollowSensor3.read() > 0.85 && LineFollowSensor4.read() > 0.85 && LineFollowSensor5.read() > 0.85)
+    {
+        noLineCount++;
+        if (noLineCount > noLineThreshold)
+        {
+            mode = STOPPED;
+        }
+    }
+    else
+    {
+        noLineDetected = false;
+        noLineCount = 0;
+        mode = FOLLOW_LINE;
 
-    // Using the sensor values directly as float for error calculation
-    errorValue = (LineFollowSensor1.read() * -1.40 + LineFollowSensor2.read() * -1.1 + LineFollowSensor3.read() * 0 + LineFollowSensor4.read() * 1.1 + LineFollowSensor5.read() * 1.40);
+        // Using the sensor values directly as float for error calculation
+        errorValue = (LineFollowSensor1.read() * -1.37 + LineFollowSensor2.read() * -1.13 + LineFollowSensor3.read() * 0 + LineFollowSensor4.read() * 1.13 + LineFollowSensor5.read() * 1.37);
 
-    float sumSensorValues = LineFollowSensor1.read() + LineFollowSensor2.read() + LineFollowSensor3.read() + LineFollowSensor4.read() + LineFollowSensor5.read();
+        float sumSensorValues = LineFollowSensor1.read() + LineFollowSensor2.read() + LineFollowSensor3.read() + LineFollowSensor4.read() + LineFollowSensor5.read();
 
-    // Normalize the error value based on the sum of sensor values
-    errorValue = errorValue / sumSensorValues;
+        // Normalize the error value based on the sum of sensor values
+        errorValue = errorValue / sumSensorValues;
+    }
 }
 
 void bluetoothCallback()
@@ -217,7 +230,7 @@ void turnBuggy(Motor &leftMotor, Motor &rightMotor)
 
     leftMotor.setDutyCycle(0.3f);  // Set left motor duty cycle for turning
     rightMotor.setDutyCycle(0.7f); // Set right motor duty cycle for turning
-    wait(1.2);                     // Wait for turn to complete
+    wait(0.8);                     // Wait for turn to complete
 
     leftMotor.setDutyCycle(0.5f); // Stop turning by setting motors to neutral
     rightMotor.setDutyCycle(0.5f);
