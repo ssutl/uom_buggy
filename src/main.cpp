@@ -27,14 +27,12 @@ DigitalOut LineFollowSensorSwitch4(PD_2);
 DigitalOut LineFollowSensorSwitch5(PC_9);
 
 // Line sensor1 being the leftmost sensor
-AnalogIn LineFollowSensor1(PC_3);
-AnalogIn LineFollowSensor2(PC_2);
-AnalogIn LineFollowSensor3(PC_4);
-AnalogIn LineFollowSensor4(PB_1);
-AnalogIn LineFollowSensor5(PC_5);
+AnalogIn LineFollowSensorFrontLeft(PB_1);
+AnalogIn LineFollowSensorFrontRight(PC_3);
+AnalogIn LineFollowSensorRear(PC_5);
 
-float Kp = 0.12;  // Proportional gain (should be between 0 and 0.075)
-float Kd = 0.013; // Differential gain (should be between 0 and 0.1)
+float Kp = 0.05; // Proportional gain (should be between 0 and 0.075)
+float Kd = 0.0;  // Differential gain (should be between 0 and 0.1)
 float errorValue = 0;
 float lastError = 0;
 float P = 0;
@@ -137,31 +135,31 @@ public:
 // If buggy is to the left the error will be positive else if the buggy is to the right the error will be negative
 void calculatePositionalError()
 {
-    // Read analog values from sensors
+    float frontLeftSensor = LineFollowSensorFrontLeft.read();
+    float frontRightSensor = LineFollowSensorFrontRight.read();
+    float rearSensor = LineFollowSensorRear.read();
 
-    // Check if no line is detected then we set mode to STOPPED, else if line is detected we set mode to FOLLOW_LINE
-    // if all are above 0.95 then no line detected
-    if (LineFollowSensor1.read() > 0.85 && LineFollowSensor2.read() > 0.85 && LineFollowSensor3.read() > 0.85 && LineFollowSensor4.read() > 0.85 && LineFollowSensor5.read() > 0.85)
+    // Check if no line is detected by any sensor
+    if (frontLeftSensor > 0.85 && frontRightSensor > 0.85 && rearSensor > 0.85)
     {
-        noLineCount++;
-        if (noLineCount > noLineThreshold)
-        {
-            mode = STOPPED;
-        }
+        mode = STOPPED; // Stop the buggy
     }
     else
     {
-        noLineDetected = false;
-        noLineCount = 0;
         mode = FOLLOW_LINE;
+        // Calculate error assuming left sensor values are negative and right sensor values are positive
+        errorValue = rearSensor < 0.1 ? 0 : (frontLeftSensor * -1.0 + frontRightSensor * 1.0);
 
-        // Using the sensor values directly as float for error calculation
-        errorValue = (LineFollowSensor1.read() * -1.329 + LineFollowSensor2.read() * -1.115 + LineFollowSensor3.read() * 0 + LineFollowSensor4.read() * 1.115 + LineFollowSensor5.read() * 1.329);
-
-        float sumSensorValues = LineFollowSensor1.read() + LineFollowSensor2.read() + LineFollowSensor3.read() + LineFollowSensor4.read() + LineFollowSensor5.read();
-
-        // Normalize the error value based on the sum of sensor values
-        errorValue = errorValue / sumSensorValues;
+        // Normalize the error
+        float sumSensorValues = frontLeftSensor + frontRightSensor;
+        if (sumSensorValues > 0)
+        {
+            errorValue = errorValue / sumSensorValues;
+        }
+        else
+        {
+            errorValue = 0; // Prevent division by zero if somehow both readings are exactly zero
+        }
     }
 }
 
@@ -214,8 +212,8 @@ void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
     // Correct duty cycles based on PID error from line detection
 
     // Clamp the duty cycles to ensure they stay within valid range
-    leftMotorDutyCycle = std::max(0.0f, std::min(1.0f, leftMotorDutyCycle - PIDvalue));
-    rightMotorDutyCycle = std::max(0.0f, std::min(1.0f, rightMotorDutyCycle + PIDvalue));
+    leftMotorDutyCycle = std::max(0.0f, std::min(1.0f, leftMotorDutyCycle + PIDvalue));
+    rightMotorDutyCycle = std::max(0.0f, std::min(1.0f, rightMotorDutyCycle - PIDvalue));
 
     // Set the updated duty cycles
     leftMotor.setDutyCycle(leftMotorDutyCycle);
@@ -251,8 +249,6 @@ int main()
     LineFollowSensorSwitch1.write(1);
     LineFollowSensorSwitch2.write(1);
     LineFollowSensorSwitch3.write(1);
-    LineFollowSensorSwitch4.write(1);
-    LineFollowSensorSwitch5.write(1);
 
     hm10.baud(9600);                 // Set the baud rate to 9600
     hm10.attach(&bluetoothCallback); // Attach the callback function
@@ -289,6 +285,11 @@ int main()
         // print error
         lcd.cls();
         lcd.locate(0, 0);
-        lcd.printf("Error: %.2f", 0.175 * errorValue);
+        lcd.printf("Error: %.2f", errorValue);
+        // print sensor values
+        lcd.locate(0, 10);
+        lcd.printf("Sensor1: %.2f", LineFollowSensorFrontLeft.read());
+        lcd.locate(60, 10);
+        lcd.printf("Sensor2: %.2f", LineFollowSensorFrontRight.read());
     }
 }
