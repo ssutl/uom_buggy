@@ -148,7 +148,7 @@ void calculatePositionalError()
     {
         mode = FOLLOW_LINE;
         // Calculate error assuming left sensor values are negative and right sensor values are positive
-        errorValue = frontLeftSensor * -1.0 + frontRightSensor * 1.0;
+        errorValue = frontLeftSensor * -0.5 + frontRightSensor * 0.5;
 
         // Normalize the error
         float sumSensorValues = frontLeftSensor + frontRightSensor;
