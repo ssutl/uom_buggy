@@ -27,21 +27,24 @@ DigitalOut LineFollowSensorSwitch4(PD_2);
 DigitalOut LineFollowSensorSwitch5(PC_9);
 
 // Line sensor1 being the leftmost sensor
-AnalogIn LineFollowSensor1(PC_3);
-AnalogIn LineFollowSensor2(PC_2);
-AnalogIn LineFollowSensor3(PC_4);
-AnalogIn LineFollowSensor4(PB_1);
-AnalogIn LineFollowSensor5(PC_5);
+AnalogIn LineFollowSensor1(PC_0);
+AnalogIn LineFollowSensor2(PA_4);
+AnalogIn LineFollowSensor5(PC_1);
+AnalogIn LineFollowSensor3(PC_5);
+AnalogIn LineFollowSensor4(PB_0);
 
-float Kp = 0.12;  // Proportional gain (should be between 0 and 0.075)
-float Kd = 0.013; // Differential gain (should be between 0 and 0.1)
+// float Kp = 0.12;  // Proportional gain (should be between 0 and 0.075)
+float Kp = 0.157; // Proportional gain (should be between 0 and 0.075)
+float Kd = 0.006; // Differential gain (should be between 0 and 0.1)
+float Ki = 0.0;   // Integral gain (should be between 0 and 0.1)
 float errorValue = 0;
 float lastError = 0;
 float P = 0;
 float D = 0;
+float I = 0;
 float PIDvalue = 0;
 
-float desiredSpeed = 0.375;
+float desiredSpeed = 0.8;
 
 bool noLineDetected = false; // Global flag
 int noLineCount = 0;         // Counter for no line detected cycles
@@ -156,7 +159,7 @@ void calculatePositionalError()
         mode = FOLLOW_LINE;
 
         // Using the sensor values directly as float for error calculation
-        errorValue = (LineFollowSensor1.read() * -1.329 + LineFollowSensor2.read() * -1.115 + LineFollowSensor3.read() * 0 + LineFollowSensor4.read() * 1.115 + LineFollowSensor5.read() * 1.329);
+        errorValue = (LineFollowSensor1.read() * -1.03 + LineFollowSensor2.read() * -0.91 + LineFollowSensor3.read() * 0 + LineFollowSensor4.read() * 0.91 + LineFollowSensor5.read() * 1.03);
 
         float sumSensorValues = LineFollowSensor1.read() + LineFollowSensor2.read() + LineFollowSensor3.read() + LineFollowSensor4.read() + LineFollowSensor5.read();
 
@@ -187,12 +190,17 @@ void motorPIDcontrol(Motor &leftMotor, Motor &rightMotor)
     // Calculate P, I, D terms separately for clarity
     P = Kp * errorValue;
     D = Kd * differentialError;
-
+    I += Ki * error;
     // Calculate total PID control value
-    PIDvalue = P + D;
+    PIDvalue = P + I + D;
 
     // Update last error for the next cycle
     lastError = error;
+
+    if (mode == STOPPED || mode == TURN || error == 0)
+    {
+        I = 0;
+    }
 
     // Get current speeds and current duty cycles
     float leftCurrentSpeed = leftMotor.getSpeed();
